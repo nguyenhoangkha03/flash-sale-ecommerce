@@ -1,5 +1,5 @@
-import { Reservation } from 'src/reservations/entities/reservation.entity';
-import { User } from 'src/users/entities/user.entity';
+import { Reservation } from '../../reservations/entities/reservation.entity';
+import { User } from '../../users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,

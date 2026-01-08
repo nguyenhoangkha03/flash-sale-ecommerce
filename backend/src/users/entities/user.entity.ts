@@ -1,5 +1,5 @@
-import { Order } from 'src/orders/entities/order.entity';
-import { Reservation } from 'src/reservations/entities/reservation.entity';
+import { Order } from '../../orders/entities/order.entity';
+import { Reservation } from '../../reservations/entities/reservation.entity';
 import {
   Column,
   CreateDateColumn,

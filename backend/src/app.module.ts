@@ -16,7 +16,7 @@ import { AppService } from './app.service';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
-      synchronize: true, // Dùng ở dev để auto-create tables
+      synchronize: false, // Dùng ở dev để auto-create tables
     }),
   ],
   controllers: [AppController],

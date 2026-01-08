@@ -25,7 +25,7 @@ export class Product {
   price: number;
 
   @Column({ nullable: true })
-  image_url: number;
+  image_url: string;
 
   @Index()
   @Column({ type: 'int', default: 0 })

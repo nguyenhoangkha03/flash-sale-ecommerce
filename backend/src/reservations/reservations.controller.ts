@@ -13,6 +13,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
+import { ReservationExpirationService } from './reservation-expiration.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -20,7 +21,10 @@ import { ReservationStatus } from './entities/reservation.entity';
 
 @Controller('reservations')
 export class ReservationsController {
-  constructor(private reservationsService: ReservationsService) {}
+  constructor(
+    private reservationsService: ReservationsService,
+    private expirationService: ReservationExpirationService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -68,5 +72,36 @@ export class ReservationsController {
 
     await this.reservationsService.releaseReservation(id, user.userId);
     return { message: 'Hủy Reservation' };
+  }
+
+  @Post(':id/expire')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async manuallyExpireReservation(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: any,
+  ) {
+    if (user.role !== 'ADMIN') {
+      throw new Error('Chỉ admin mới có thể hết hạn reservation');
+    }
+
+    await this.reservationsService.releaseReservation(id);
+    return { message: 'Reservation đã được hết hạn' };
+  }
+
+  @Post('admin/expire-all')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async triggerExpirationJob(@CurrentUser() user: any) {
+    if (user.role !== 'ADMIN') {
+      throw new Error('Chỉ admin mới có thể trigger expiration job');
+    }
+
+    const result = await this.expirationService.manuallyExpireReservations();
+    return {
+      message: 'Expiration job đã chạy',
+      expired: result.expired,
+      failed: result.failed,
+    };
   }
 }

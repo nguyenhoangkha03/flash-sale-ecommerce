@@ -154,6 +154,7 @@ export class ReservationsService {
   async releaseReservation(
     reservationId: string,
     userId?: string,
+    isAutoExpired: boolean = false,
   ): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -164,7 +165,6 @@ export class ReservationsService {
       const reservation = await queryRunner.manager.findOne(Reservation, {
         where: { id: reservationId },
         lock: { mode: 'pessimistic_write' },
-        relations: ['items'],
       });
 
       if (!reservation) {
@@ -180,8 +180,13 @@ export class ReservationsService {
         );
       }
 
+      // Load items
+      const items = await queryRunner.manager.find(ReservationItem, {
+        where: { reservation_id: reservationId },
+      });
+
       // Khôi phục kho
-      for (const item of reservation.items) {
+      for (const item of items) {
         const product = await queryRunner.manager.findOne(Product, {
           where: { id: item.product_id },
         });
@@ -199,10 +204,14 @@ export class ReservationsService {
       }
 
       // Cập nhật trạng thái Reservation
+      const newStatus = isAutoExpired
+        ? ReservationStatus.EXPIRED
+        : ReservationStatus.CANCELLED;
+
       await queryRunner.manager.update(
         Reservation,
         { id: reservationId },
-        { status: ReservationStatus.CANCELLED },
+        { status: newStatus },
       );
 
       // Log Audit
@@ -213,6 +222,7 @@ export class ReservationsService {
         entityId: reservationId,
         details: {
           previousStatus: reservation.status,
+          isAutoExpired,
         },
       });
 

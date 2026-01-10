@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Module
 import { AuthModule } from './auth/auth.module';
@@ -20,6 +21,9 @@ import { LoggingMiddleware } from './common/middlewares/logging.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    // Enable cron jobs
+    ScheduleModule.forRoot(),
 
     // Cấu hình TypeORM để kết nối PostgreSQL
     TypeOrmModule.forRoot({

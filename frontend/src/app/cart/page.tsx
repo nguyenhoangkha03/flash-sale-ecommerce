@@ -23,7 +23,7 @@ export default function CartPage() {
             Bạn cần đăng nhập để xem giỏ hàng của mình
           </p>
           <Link
-            href="/auth/login"
+            href="/login"
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Đăng nhập

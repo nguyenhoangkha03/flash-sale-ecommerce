@@ -14,7 +14,7 @@ export function CartSummary() {
 
   const handleCheckout = () => {
     if (!auth.isAuthenticated) {
-      router.push('/auth/login');
+      router.push('/login');
       return;
     }
 

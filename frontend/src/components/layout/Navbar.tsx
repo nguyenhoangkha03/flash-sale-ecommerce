@@ -11,7 +11,7 @@ export function Navbar() {
 
     const handleLogout = () => {
         auth.logout();
-        router.push("/auth/login");
+        router.push("/login");
     };
 
     return (
@@ -36,6 +36,14 @@ export function Navbar() {
                         >
                             Sản phẩm
                         </Link>
+                        {auth.isAuthenticated && (
+                            <Link
+                                href="/orders"
+                                className="text-gray-700 hover:text-blue-600"
+                            >
+                                Đơn hàng
+                            </Link>
+                        )}
                         {auth.isAuthenticated &&
                             auth.user?.role === "ADMIN" && (
                                 <Link
@@ -68,13 +76,13 @@ export function Navbar() {
                         ) : (
                             <div className="flex space-x-4">
                                 <Link
-                                    href="/auth/login"
+                                    href="/login"
                                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
                                 >
                                     Đăng nhập
                                 </Link>
                                 <Link
-                                    href="/auth/register"
+                                    href="/register"
                                     className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-md"
                                 >
                                     Đăng ký

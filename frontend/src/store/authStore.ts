@@ -88,6 +88,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     loadUser: async () => {
+        set({ isLoading: true });
         try {
             const token = localStorage.getItem("accessToken");
             const userStr = localStorage.getItem("user");
@@ -100,6 +101,8 @@ export const useAuthStore = create<AuthState>((set) => ({
             console.error("Failed to load user:", error);
             localStorage.removeItem("accessToken");
             localStorage.removeItem("user");
+        } finally {
+            set({ isLoading: false });
         }
     },
 }));

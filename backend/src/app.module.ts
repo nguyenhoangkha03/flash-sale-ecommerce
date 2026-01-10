@@ -1,6 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+// Module
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { ProductsModule } from './products/products.module';
+import { OrdersModule } from './orders/orders.module';
+import { AuditModule } from './audit/audit.module';
+import { ReservationsModule } from './reservations/reservations.module';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -16,8 +25,16 @@ import { AppService } from './app.service';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
-      synchronize: false, // Dùng ở dev để auto-create tables
+      synchronize: false,
     }),
+
+    // Auth module
+    AuthModule,
+    UsersModule,
+    ReservationsModule,
+    ProductsModule,
+    OrdersModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],

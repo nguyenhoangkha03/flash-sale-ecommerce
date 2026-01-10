@@ -1,12 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useProducts } from "@/hooks/useProducts";
+import { useSocket } from "@/hooks/useSocket";
+import { RealtimeIndicator } from "@/components/ui/RealtimeIndicator";
 import { ProductCard } from "@/components/products/ProductCard";
 
 export default function ProductsPage() {
     const [page, setPage] = useState(1);
     const { products, meta, isLoading, error } = useProducts(page, 12);
+    const { on, off, isConnected } = useSocket();
+    const [localProducts, setLocalProducts] = useState(products);
+    const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastSequenceRef = useRef<Map<string, number>>(new Map());
+
+    // Sync local products with fetched products
+    useEffect(() => {
+        setLocalProducts(products);
+    }, [products]);
+
+    // Subscribe to stock changes with debouncing
+    useEffect(() => {
+        const handleStockChanged = (data: any) => {
+            // Skip duplicate events
+            const lastSeq = lastSequenceRef.current.get(data.productId) || 0;
+            if (data.sequence && data.sequence <= lastSeq) {
+                return;
+            }
+            if (data.sequence) {
+                lastSequenceRef.current.set(data.productId, data.sequence);
+            }
+
+            // Debounce updates to avoid too frequent re-renders
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+
+            updateTimeoutRef.current = setTimeout(() => {
+                setLocalProducts((prev) =>
+                    prev.map((p) =>
+                        p.id === data.productId
+                            ? {
+                                  ...p,
+                                  available_stock: data.availableStock,
+                                  reserved_stock: data.reservedStock,
+                                  sold_stock: data.soldStock,
+                              }
+                            : p
+                    )
+                );
+            }, 100); // Debounce 100ms
+        };
+
+        on("stock:changed", handleStockChanged);
+
+        return () => {
+            off("stock:changed", handleStockChanged);
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+        };
+    }, [on, off]);
 
     if (error) {
         return (
@@ -22,15 +76,18 @@ export default function ProductsPage() {
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                        Sản Phẩm Flash Sale
-                    </h1>
-                    <p className="text-gray-600">
-                        Khám phá những ưu đãi tuyệt vời trên các mặt hàng số
-                        lượng có hạn.
-                    </p>
+                {/* Header with Realtime Indicator */}
+                <div className="flex justify-between items-start mb-8">
+                    <div>
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                            Sản Phẩm Flash Sale
+                        </h1>
+                        <p className="text-gray-600">
+                            Khám phá những ưu đãi tuyệt vời trên các mặt hàng số
+                            lượng có hạn.
+                        </p>
+                    </div>
+                    <RealtimeIndicator isConnected={isConnected} />
                 </div>
 
                 {/* Loading State */}
@@ -41,10 +98,10 @@ export default function ProductsPage() {
                 )}
 
                 {/* Products Grid */}
-                {!isLoading && products.length > 0 && (
+                {!isLoading && localProducts.length > 0 && (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                            {products.map((product) => (
+                            {localProducts.map((product) => (
                                 <ProductCard
                                     key={product.id}
                                     product={product}

@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axiosInstance from '@/lib/axios';
 import { useCartStore } from '@/store/cartStore';
+import { useSocket } from '@/hooks/useSocket';
+import { RealtimeIndicator } from '@/components/ui/RealtimeIndicator';
 import toast from 'react-hot-toast';
 import { Product } from '@/hooks/useProducts';
 
@@ -20,10 +22,12 @@ export default function ProductDetailPage({
   const router = useRouter();
   const { id } = use(params);
   const addItem = useCartStore((state) => state.addItem);
+  const { on, off, isConnected } = useSocket();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const lastSequenceRef = useRef<number>(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,6 +43,40 @@ export default function ProductDetailPage({
 
     fetchProduct();
   }, [id]);
+
+  // Subscribe to real-time stock updates
+  useEffect(() => {
+    const handleStockChanged = (data: any) => {
+      // Only update if this is for current product
+      if (data.productId !== id) return;
+
+      // Skip duplicate events based on sequence
+      if (data.sequence && data.sequence <= lastSequenceRef.current) {
+        return;
+      }
+
+      if (data.sequence) {
+        lastSequenceRef.current = data.sequence;
+      }
+
+      // Update product stock
+      setProduct((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          available_stock: data.availableStock,
+          reserved_stock: data.reservedStock,
+          sold_stock: data.soldStock,
+        };
+      });
+    };
+
+    on('stock:changed', handleStockChanged);
+
+    return () => {
+      off('stock:changed', handleStockChanged);
+    };
+  }, [id, on, off]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -88,14 +126,17 @@ export default function ProductDetailPage({
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* Breadcrumb */}
-        <nav className="mb-8 text-sm text-gray-600">
-          <Link href="/products" className="hover:text-blue-600">
-            Sản phẩm
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-900 font-semibold">{product.name}</span>
-        </nav>
+        {/* Breadcrumb with Realtime Indicator */}
+        <div className="flex justify-between items-center mb-8">
+          <nav className="text-sm text-gray-600">
+            <Link href="/products" className="hover:text-blue-600">
+              Sản phẩm
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-gray-900 font-semibold">{product.name}</span>
+          </nav>
+          <RealtimeIndicator isConnected={isConnected} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Image */}

@@ -10,6 +10,7 @@ import { ReservationItem } from './entities/reservation-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { AuditLogService } from '../audit/audit-log.service';
+import { EventsService } from '../events/events.service';
 
 const RESERVATION_TTL_MINUTES = 10;
 
@@ -20,7 +21,10 @@ export class ReservationsService {
     private reservationsRepository: Repository<Reservation>,
     @InjectRepository(ReservationItem)
     private reservationItemsRepository: Repository<ReservationItem>,
+    @InjectRepository(Product)
+    private productsRepository: Repository<Product>,
     private auditLogService: AuditLogService,
+    private eventsService: EventsService,
     private dataSource: DataSource,
   ) {}
 
@@ -140,8 +144,40 @@ export class ReservationsService {
       // Commit
       await queryRunner.commitTransaction();
 
+      // Emit stock changed events for all products
+      for (const product of products) {
+        const requestedQty = itemMap.get(product.id) || 0;
+        const updatedProduct = await this.productsRepository.findOne({
+          where: { id: product.id },
+        });
+
+        if (updatedProduct) {
+          this.eventsService.emitStockChanged(product.id, {
+            productId: product.id,
+            availableStock: updatedProduct.available_stock,
+            reservedStock: updatedProduct.reserved_stock,
+            soldStock: updatedProduct.sold_stock,
+            timestamp: new Date(),
+          });
+        }
+      }
+
+      // Emit reservation created event
+      const reservationWithItems = await this.getReservationWithItems(savedReservation.id);
+      this.eventsService.emitReservationCreated({
+        reservationId: savedReservation.id,
+        userId,
+        items: reservationWithItems.items.map(item => ({
+          productId: item.product_id,
+          quantity: item.quantity,
+          priceSnapshot: item.price_snapshot,
+        })),
+        expiresAt: reservationWithItems.expires_at,
+        timestamp: new Date(),
+      });
+
       // Trả lại toàn bộ reservation bao gồm cả các mặt hàng đã đặt.
-      return this.getReservationWithItems(savedReservation.id);
+      return reservationWithItems;
     } catch (error) {
       // Rollback nếu lỗi
       await queryRunner.rollbackTransaction();

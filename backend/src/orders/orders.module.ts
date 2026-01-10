@@ -9,6 +9,7 @@ import { Reservation } from '../reservations/entities/reservation.entity';
 import { ReservationItem } from '../reservations/entities/reservation-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { AuditModule } from '../audit/audit.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuditModule } from '../audit/audit.module';
       Product,
     ]),
     AuditModule,
+    EventsModule,
   ],
   providers: [OrdersService, OrderExpirationService],
   controllers: [OrdersController],

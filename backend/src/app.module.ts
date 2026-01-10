@@ -10,6 +10,7 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { AuditModule } from './audit/audit.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { EventsModule } from './events/events.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -40,6 +41,7 @@ import { LoggingMiddleware } from './common/middlewares/logging.middleware';
     ProductsModule,
     OrdersModule,
     AuditModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

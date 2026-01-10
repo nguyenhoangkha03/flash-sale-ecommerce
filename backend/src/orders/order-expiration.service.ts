@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrdersService } from './orders.service';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class OrderExpirationService {
@@ -13,6 +14,7 @@ export class OrderExpirationService {
     @InjectRepository(Order)
     private ordersRepository: Repository<Order>,
     private ordersService: OrdersService,
+    private eventsService: EventsService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -57,6 +59,9 @@ export class OrderExpirationService {
 
           successCount++;
           this.logger.log(`✓ Hết hạn thanh toán cho đơn hàng ${order.id}`);
+
+          // Emit event to notify user
+          this.eventsService.emitOrderExpired(order.id, order.user_id);
         } catch (error) {
           errorCount++;
           this.logger.error(

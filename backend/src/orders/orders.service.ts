@@ -11,6 +11,7 @@ import { Reservation, ReservationStatus } from '../reservations/entities/reserva
 import { ReservationItem } from '../reservations/entities/reservation-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { AuditLogService } from '../audit/audit-log.service';
+import { EventsService } from '../events/events.service';
 
 const PAYMENT_TTL_MINUTES = 5;
 
@@ -28,6 +29,7 @@ export class OrdersService {
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
     private auditLogService: AuditLogService,
+    private eventsService: EventsService,
     private dataSource: DataSource,
   ) {}
 
@@ -153,7 +155,20 @@ export class OrdersService {
       });
 
       await queryRunner.commitTransaction();
-      return this.getOrderWithItems(savedOrder.id);
+
+      // Emit order created event
+      const createdOrder = await this.getOrderWithItems(savedOrder.id);
+      this.eventsService.emitOrderCreated({
+        orderId: createdOrder.id,
+        userId,
+        reservationId,
+        totalAmount,
+        status: createdOrder.status,
+        expiresAt: createdOrder.payment_expires_at,
+        timestamp: new Date(),
+      });
+
+      return createdOrder;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -256,6 +271,28 @@ export class OrdersService {
       });
 
       await queryRunner.commitTransaction();
+
+      // Emit stock changed events for all products (reserved → sold)
+      const paidOrderItems = await this.orderItemsRepository.find({
+        where: { order_id: orderId },
+      });
+
+      for (const item of paidOrderItems) {
+        const updatedProduct = await this.productsRepository.findOne({
+          where: { id: item.product_id },
+        });
+
+        if (updatedProduct) {
+          this.eventsService.emitStockChanged(item.product_id, {
+            productId: item.product_id,
+            availableStock: updatedProduct.available_stock,
+            reservedStock: updatedProduct.reserved_stock,
+            soldStock: updatedProduct.sold_stock,
+            timestamp: new Date(),
+          });
+        }
+      }
+
       return this.getOrderWithItems(orderId);
     } catch (error) {
       await queryRunner.rollbackTransaction();

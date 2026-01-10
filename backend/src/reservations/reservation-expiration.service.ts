@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
 import { ReservationsService } from './reservations.service';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class ReservationExpirationService {
@@ -13,6 +14,7 @@ export class ReservationExpirationService {
     @InjectRepository(Reservation)
     private reservationsRepository: Repository<Reservation>,
     private reservationsService: ReservationsService,
+    private eventsService: EventsService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -51,6 +53,9 @@ export class ReservationExpirationService {
           );
           successCount++;
           this.logger.log(`✓ Reservation ${reservation.id} tự động hết hạn`);
+
+          // Emit event to notify user
+          this.eventsService.emitReservationExpired(reservation.id, reservation.user_id);
         } catch (error) {
           errorCount++;
           this.logger.error(

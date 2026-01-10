@@ -7,11 +7,13 @@ import { ReservationsController } from './reservations.controller';
 import { ReservationExpirationService } from './reservation-expiration.service';
 import { Product } from '../products/entities/product.entity';
 import { AuditModule } from '../audit/audit.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Reservation, ReservationItem, Product]),
     AuditModule,
+    EventsModule,
   ],
   providers: [ReservationsService, ReservationExpirationService],
   controllers: [ReservationsController],

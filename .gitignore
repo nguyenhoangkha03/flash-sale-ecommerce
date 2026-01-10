@@ -16,7 +16,7 @@ dist/
 .env.test.local
 .env.production.local
 *.env
-.env.*
+.env
 
 # Logs
 npm-debug.log*
@@ -39,3 +39,6 @@ Thumbs.db
 
 # Coverage directory used by testing tools
 coverage/
+
+*.md
+!README.md

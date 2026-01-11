@@ -85,7 +85,11 @@ export class ReservationsController {
       throw new Error('Chỉ admin mới có thể hết hạn reservation');
     }
 
-    await this.reservationsService.releaseReservation(id);
+    await this.reservationsService.releaseReservation(
+      id,
+      user.userId,
+      true, // isAutoExpired
+    );
     return { message: 'Reservation đã được hết hạn' };
   }
 

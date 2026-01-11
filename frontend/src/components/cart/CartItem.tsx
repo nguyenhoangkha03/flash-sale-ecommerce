@@ -30,64 +30,72 @@ export function CartItemComponent({ item }: CartItemProps) {
     const subtotal = item.price * item.quantity;
 
     return (
-        <div className="flex items-center gap-4 border-b pb-4">
-            {/* Product Info */}
-            <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">
-                    {item.name}
-                </h3>
-                <p className="text-gray-600 text-sm">
-                    Giá:{" "}
-                    {item.price.toLocaleString("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                    })}
-                </p>
-            </div>
-
-            {/* Quantity Controls */}
-            <div className="flex items-center border border-gray-300 rounded-md">
-                <button
-                    onClick={handleDecrement}
-                    className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                >
-                    −
-                </button>
-                <input
-                    type="text"
-                    value={item.quantity}
-                    readOnly
-                    className="w-12 text-center border-l border-r border-gray-300 py-1"
+        <div className="flex gap-4 p-4 bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-accent-brown">
+            {/* Product Image */}
+            <div className="w-32 h-32 rounded-lg bg-slate-100 dark:bg-accent-brown overflow-hidden shrink-0">
+                <img
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                    src={item.image || "https://via.placeholder.com/150"}
                 />
-                <button
-                    onClick={handleIncrement}
-                    className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                >
-                    +
-                </button>
             </div>
 
-            {/* Subtotal */}
-            <div className="text-right min-w-30">
-                <p className="text-lg font-bold text-blue-600">
-                    {subtotal.toLocaleString("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                    })}
-                </p>
-                <p className="text-xs text-gray-500">x{item.quantity}</p>
-            </div>
+            {/* Product Info */}
+            <div className="flex flex-col justify-between flex-1 py-1">
+                <div className="flex justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                            {item.name}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-text-secondary-dark">
+                            SKU: {item.id}
+                        </p>
+                    </div>
+                    <p className="text-lg font-bold text-slate-900 dark:text-white">
+                        {item.price.toLocaleString("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                        })}
+                    </p>
+                </div>
 
-            {/* Remove Button */}
-            <button
-                onClick={() => {
-                    removeItem(item.id);
-                    toast.success("Đã xóa khỏi giỏ hàng");
-                }}
-                className="px-4 py-2 text-red-600 border border-red-600 rounded-md hover:bg-red-50"
-            >
-                Xóa
-            </button>
+                {/* Quantity Controls & Remove */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center border border-slate-200 dark:border-accent-brown rounded-lg bg-slate-50 dark:bg-[#231a10]">
+                        <button
+                            onClick={handleDecrement}
+                            className="px-3 py-1 text-slate-500 hover:text-primary transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-sm">
+                                remove
+                            </span>
+                        </button>
+                        <span className="px-3 py-1 font-bold text-sm text-white">
+                            {item.quantity}
+                        </span>
+                        <button
+                            onClick={handleIncrement}
+                            className="px-3 py-1 text-slate-500 hover:text-primary transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-sm">
+                                add
+                            </span>
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => {
+                            removeItem(item.id);
+                            toast.success("Đã xóa khỏi giỏ hàng");
+                        }}
+                        className="text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-lg">
+                            delete
+                        </span>
+                        <span className="text-xs font-medium">Xóa</span>
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

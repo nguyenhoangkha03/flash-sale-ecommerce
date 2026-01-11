@@ -18,11 +18,12 @@ interface ProductDetailPageProps {
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     const { id } = use(params);
     const addItem = useCartStore((state) => state.addItem);
-    const { on, off, isConnected } = useSocket();
+    const { on, off, isConnected, emit } = useSocket();
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);
+    const [viewerCount, setViewerCount] = useState(0);
     const lastSequenceRef = useRef<number>(0);
 
     useEffect(() => {
@@ -42,7 +43,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         fetchProduct();
     }, [id]);
 
-    // Subscribe to real-time stock updates
+    // Subscribe to real-time stock updates and viewer count
     useEffect(() => {
         const handleStockChanged = (data: any) => {
             // Only update if this is for current product
@@ -69,12 +70,29 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             });
         };
 
+        const handleProductViewers = (data: any) => {
+            if (data.productId === id) {
+                setViewerCount(data.viewerCount);
+            }
+        };
+
         on("stock:changed", handleStockChanged);
+        on("product:viewers", handleProductViewers);
+
+        // Emit product:view event to server
+        if (id) {
+            emit("product:view", { productId: id });
+        }
 
         return () => {
             off("stock:changed", handleStockChanged);
+            off("product:viewers", handleProductViewers);
+            // Emit product:unview when leaving
+            if (id) {
+                emit("product:unview", { productId: id });
+            }
         };
-    }, [id, on, off]);
+    }, [id, on, off, emit]);
 
     const handleAddToCart = () => {
         if (!product) return;
@@ -90,6 +108,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             price: Number(product.price),
             quantity,
             availableStock: product.available_stock,
+            image: product.image_url,
         });
 
         toast.success("Đã thêm vào giỏ hàng!");
@@ -111,7 +130,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                     <h1 className="text-2xl font-bold text-white mb-4">Lỗi</h1>
                     <p className="text-gray-400 mb-6">{error}</p>
                     <Link
-                        href="/products"
+                        href="/"
                         className="inline-block px-6 py-3 bg-primary text-background-dark rounded-lg hover:bg-orange-600 font-bold"
                     >
                         Quay lại danh sách sản phẩm
@@ -143,7 +162,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                             chevron_right
                         </span>
                         <Link
-                            href="/products"
+                            href="/"
                             className="text-text-secondary-dark hover:text-primary transition-colors font-medium"
                         >
                             Sản phẩm
@@ -178,35 +197,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
                     {/* Product Details (Right Column) */}
                     <div className="xl:col-span-5 flex flex-col gap-6">
-                        {/* Flash Sale Timer */}
-                        <div className="bg-primary/20 p-4 rounded-xl border border-primary/30 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-primary">
-                                <span className="material-symbols-outlined animate-pulse">
-                                    timer
-                                </span>
-                                <span className="font-bold text-sm tracking-wide uppercase">
-                                    Flash Sale Ends In:
-                                </span>
-                            </div>
-                            <div className="flex gap-2">
-                                <div className="bg-card-dark px-2.5 py-1 rounded text-white font-mono font-bold text-lg min-w-[40px] text-center border border-accent-brown">
-                                    04
-                                </div>
-                                <span className="text-text-secondary-dark font-bold self-center">
-                                    :
-                                </span>
-                                <div className="bg-card-dark px-2.5 py-1 rounded text-white font-mono font-bold text-lg min-w-[40px] text-center border border-accent-brown">
-                                    12
-                                </div>
-                                <span className="text-text-secondary-dark font-bold self-center">
-                                    :
-                                </span>
-                                <div className="bg-card-dark px-2.5 py-1 rounded text-primary font-mono font-bold text-lg min-w-[40px] text-center border border-primary/50">
-                                    45
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Title & Price */}
                         <div className="space-y-4">
                             <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight tracking-tight">
@@ -271,15 +261,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                             <p>
                                 Sản phẩm nổi bật!{" "}
                                 <span className="text-white font-bold">
-                                    {totalStock > 50
-                                        ? Math.floor(Math.random() * 20 + 10)
-                                        : Math.max(
-                                              1,
-                                              totalStock - product.sold_stock
-                                          )}{" "}
-                                    người
+                                    {viewerCount}
                                 </span>{" "}
-                                đang xem sản phẩm này.
+                                người đang xem sản phẩm này.
                             </p>
                         </div>
 
@@ -298,12 +282,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                                     shopping_bag
                                 </span>
                                 {product.available_stock > 0
-                                    ? "Thêm vào Giỏ / Giữ Hàng"
+                                    ? "Thêm vào Giỏ"
                                     : "Hết Hàng"}
                             </button>
                             <p className="text-center text-xs text-text-secondary-dark/60">
-                                Hàng được giữ trong 10 phút sau khi thêm vào
-                                giỏ.
+                                Hàng sẽ được thêm vào giỏ chờ được giữ hàng.
                             </p>
                         </div>
 

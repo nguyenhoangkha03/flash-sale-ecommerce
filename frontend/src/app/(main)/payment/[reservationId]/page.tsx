@@ -128,7 +128,7 @@ export default function PaymentPage() {
                         {error || "Không tìm thấy đơn giữ hàng"}
                     </p>
                     <button
-                        onClick={() => router.push("/products")}
+                        onClick={() => router.push("/")}
                         className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                         Quay lại mua sắm

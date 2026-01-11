@@ -38,7 +38,7 @@ export function RegisterForm() {
         try {
             await register(formData.email, formData.password, formData.name);
             toast.success("Đăng ký thành công!");
-            router.push("/products");
+            router.push("/");
         } catch (error: any) {
             const message = error.response?.data?.message || error.message;
             toast.error(message);

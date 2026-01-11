@@ -24,6 +24,7 @@ export function ProductCard({ product }: ProductCardProps) {
             price: Number(product.price),
             quantity: 1,
             availableStock: product.available_stock,
+            image: product.image_url,
         });
 
         toast.success("Đã thêm vào giỏ hàng");

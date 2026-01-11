@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCartStore } from "@/store/cartStore";
 import axiosInstance from "@/lib/axios";
 import toast from "react-hot-toast";
+import { formatVND } from "@/lib/currency";
+import FullScreenLoader from "@/components/ui/FullScreenLoader";
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -19,11 +21,11 @@ export default function CheckoutPage() {
     const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
 
     useEffect(() => {
-        // Redirect to login if not authenticated
-        if (!auth.isAuthenticated) {
+        // Chờ auth khởi tạo xong mới kiểm tra
+        if (auth.isInitialized && !auth.isAuthenticated) {
             router.push("/login");
         }
-    }, [auth.isAuthenticated, router]);
+    }, [auth.isAuthenticated, auth.isInitialized, router]);
 
     // Generate idempotency key once when component mounts (per checkout session)
     useEffect(() => {
@@ -69,6 +71,10 @@ export default function CheckoutPage() {
 
         checkStock();
     }, [cartItems]);
+
+    if (auth.isLoading && !auth.isInitialized) {
+        return <FullScreenLoader />;
+    }
 
     const handleCreateReservation = async () => {
         if (cartItems.length === 0) {
@@ -250,33 +256,40 @@ export default function CheckoutPage() {
                                 {cartItems.map((item) => (
                                     <div
                                         key={item.id}
-                                        className={`flex justify-between items-center p-4 border rounded-xl transition-colors ${
+                                        className={`flex gap-4 p-4 border rounded-xl transition-colors ${
                                             outOfStockItems.includes(item.id)
                                                 ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900"
                                                 : "bg-primary/5 border-primary/20 dark:bg-primary/5 dark:border-primary/30"
                                         }`}
                                     >
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-slate-900 dark:text-white">
+                                        {/* Product Image */}
+                                        {item.image && (
+                                            <div className="flex-shrink-0 w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden">
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Product Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold text-slate-900 dark:text-white truncate">
                                                 {item.name}
                                             </h3>
                                             <p className="text-sm text-slate-600 dark:text-text-secondary-dark mt-1">
-                                                {item.quantity} ×{" "}
-                                                {item.price.toLocaleString(
-                                                    "vi-VN"
-                                                )}
-                                                đ
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-slate-900 dark:text-white">
-                                                {(
-                                                    item.price * item.quantity
-                                                ).toLocaleString("vi-VN")}
-                                                đ
+                                                {item.quantity} × {formatVND(item.price)}
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-text-secondary-dark mt-1">
                                                 Tồn: {item.availableStock}
+                                            </p>
+                                        </div>
+
+                                        {/* Total Price */}
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="font-bold text-slate-900 dark:text-white">
+                                                {formatVND(item.price * item.quantity)}
                                             </p>
                                         </div>
                                     </div>
@@ -314,16 +327,15 @@ export default function CheckoutPage() {
                                                 Tạm tính:
                                             </span>
                                             <span className="font-semibold text-slate-900 dark:text-white">
-                                                {cartItems
-                                                    .reduce(
+                                                {formatVND(
+                                                    cartItems.reduce(
                                                         (sum, item) =>
                                                             sum +
                                                             item.price *
                                                                 item.quantity,
                                                         0
                                                     )
-                                                    .toLocaleString("vi-VN")}
-                                                đ
+                                                )}
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
@@ -346,16 +358,15 @@ export default function CheckoutPage() {
                                             Tổng cộng:
                                         </span>
                                         <span className="text-2xl font-black text-primary">
-                                            {cartItems
-                                                .reduce(
+                                            {formatVND(
+                                                cartItems.reduce(
                                                     (sum, item) =>
                                                         sum +
                                                         item.price *
                                                             item.quantity,
                                                     0
                                                 )
-                                                .toLocaleString("vi-VN")}
-                                            đ
+                                            )}
                                         </span>
                                     </div>
 

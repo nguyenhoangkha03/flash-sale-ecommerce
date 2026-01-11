@@ -1,15 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSocket } from "@/hooks/useSocket";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductCard } from "@/components/products/ProductCard";
 import { RealtimeIndicator } from "@/components/ui/RealtimeIndicator";
 
 export default function Home() {
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get("search") || "";
+    
     const { on, off, isConnected } = useSocket();
     const { products, isLoading } = useProducts(1, 20);
     const [localProducts, setLocalProducts] = useState(products);
+    const [filteredProducts, setFilteredProducts] = useState(products);
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSequenceRef = useRef<Map<string, number>>(new Map());
 
@@ -17,6 +22,19 @@ export default function Home() {
     useEffect(() => {
         setLocalProducts(products);
     }, [products]);
+
+    // Filter products based on search query
+    useEffect(() => {
+        if (searchQuery.trim()) {
+            const filtered = localProducts.filter((p) =>
+                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                p.description.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setFilteredProducts(filtered);
+        } else {
+            setFilteredProducts(localProducts);
+        }
+    }, [searchQuery, localProducts]);
 
     // Subscribe to stock changes with debouncing
     useEffect(() => {
@@ -98,12 +116,30 @@ export default function Home() {
                     </div>
                 )}
 
+                {/* Search Results Header */}
+                {searchQuery && !isLoading && (
+                    <div className="mb-6">
+                        <p className="text-gray-600 dark:text-text-secondary-dark">
+                            Kết quả tìm kiếm cho "<strong>{searchQuery}</strong>" ({filteredProducts.length} sản phẩm)
+                        </p>
+                    </div>
+                )}
+
                 {/* Product Grid */}
-                {!isLoading && localProducts.length > 0 && (
+                {!isLoading && filteredProducts.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {localProducts.map((product) => (
+                        {filteredProducts.map((product) => (
                             <ProductCard key={product.id} product={product} />
                         ))}
+                    </div>
+                )}
+
+                {/* Empty Search Results */}
+                {!isLoading && searchQuery && filteredProducts.length === 0 && (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 dark:text-text-secondary-dark mb-4">
+                            Không tìm thấy sản phẩm nào phù hợp với "<strong>{searchQuery}</strong>"
+                        </p>
                     </div>
                 )}
             </main>

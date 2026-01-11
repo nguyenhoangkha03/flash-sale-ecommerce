@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
 import toast from "react-hot-toast";
 import { Product } from "@/hooks/useProducts";
+import { formatVND } from "@/lib/currency";
 
 interface ProductCardProps {
     product: Product;
@@ -87,10 +88,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 </h3>
                 <div className="flex items-baseline gap-2 mb-4">
                     <span className="text-xl font-black text-primary">
-                        {typeof product.price === "string"
-                            ? parseFloat(product.price).toLocaleString("vi-VN")
-                            : Number(product.price).toLocaleString("vi-VN")}
-                        <span className="text-sm"> ₫</span>
+                        {formatVND(product.price)}
                     </span>
                 </div>
 

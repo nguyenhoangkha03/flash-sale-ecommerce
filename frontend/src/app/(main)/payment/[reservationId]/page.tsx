@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import axiosInstance from "@/lib/axios";
 import { ReservationTimer } from "@/components/reservation/ReservationTimer";
 import toast from "react-hot-toast";
+import { formatVND } from "@/lib/currency";
 
 interface ReservationItem {
     id: string;
@@ -212,12 +213,12 @@ export default function PaymentPage() {
                                         Sản phẩm {index + 1}
                                     </h3>
                                     <p className="text-sm text-slate-600 dark:text-text-secondary-dark mt-1">
-                                        {item.quantity} × {item.price_snapshot.toLocaleString("vi-VN")}đ
+                                        {item.quantity} × {formatVND(item.price_snapshot)}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-bold text-slate-900 dark:text-white">
-                                        {(item.price_snapshot * item.quantity).toLocaleString("vi-VN")}đ
+                                        {formatVND(item.price_snapshot * item.quantity)}
                                     </p>
                                 </div>
                             </div>
@@ -270,7 +271,7 @@ export default function PaymentPage() {
                                 <div className="flex justify-between text-slate-600 dark:text-text-secondary-dark">
                                     <span>Tạm tính:</span>
                                     <span className="font-semibold text-slate-900 dark:text-white">
-                                        {totalAmount.toLocaleString("vi-VN")}đ
+                                        {formatVND(totalAmount)}
                                     </span>
                                 </div>
                             </div>
@@ -281,7 +282,7 @@ export default function PaymentPage() {
                                 </span>
                                 <div className="text-right">
                                     <span className="text-3xl font-black text-primary">
-                                        {totalAmount.toLocaleString("vi-VN")}đ
+                                        {formatVND(totalAmount)}
                                     </span>
                                     <p className="text-[10px] text-slate-400 uppercase tracking-tighter">
                                         Bao gồm VAT

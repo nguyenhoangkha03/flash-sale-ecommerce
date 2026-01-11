@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import axiosInstance from "@/lib/axios";
 import Link from "next/link";
+import { formatVND } from "@/lib/currency";
+import FullScreenLoader from "@/components/ui/FullScreenLoader";
 
 interface OrderItem {
     id: string;
@@ -31,9 +33,8 @@ export default function OrdersPage() {
     const [filterStatus, setFilterStatus] = useState<string>("");
 
     useEffect(() => {
-        if (!auth.isAuthenticated) {
+        if (auth.isInitialized && !auth.isAuthenticated) {
             router.push("/login");
-            return;
         }
 
         const fetchOrders = async () => {
@@ -52,25 +53,14 @@ export default function OrdersPage() {
         };
 
         fetchOrders();
-    }, [auth.isAuthenticated, router, filterStatus]);
+    }, [auth.isAuthenticated, auth.isInitialized, router, filterStatus]);
 
     if (!auth.isAuthenticated) {
         return null;
     }
 
     if (isLoading) {
-        return (
-            <div className="bg-background-light dark:bg-background-dark min-h-screen">
-                <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                        <p className="mt-4 text-gray-600 dark:text-text-secondary-dark">
-                            Đang tải...
-                        </p>
-                    </div>
-                </main>
-            </div>
-        );
+        return <FullScreenLoader />;
     }
 
     const statusColor = {
@@ -79,8 +69,7 @@ export default function OrdersPage() {
             "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400",
         CANCELLED:
             "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400",
-        EXPIRED:
-            "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400",
+        EXPIRED: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400",
     };
 
     const statusLabel = {
@@ -147,7 +136,9 @@ export default function OrdersPage() {
                     >
                         <option value="">Tất Cả</option>
                         <option value="PAID">✓ Đã Thanh Toán</option>
-                        <option value="PENDING_PAYMENT">⏳ Chờ Thanh Toán</option>
+                        <option value="PENDING_PAYMENT">
+                            ⏳ Chờ Thanh Toán
+                        </option>
                         <option value="CANCELLED">✗ Đã Hủy</option>
                         <option value="EXPIRED">✗ Hết Hạn</option>
                     </select>
@@ -207,10 +198,7 @@ export default function OrdersPage() {
                                             Tổng Tiền
                                         </p>
                                         <p className="text-2xl font-black text-primary">
-                                            {order.total_amount.toLocaleString(
-                                                "vi-VN"
-                                            )}
-                                            đ
+                                            {formatVND(order.total_amount)}
                                         </p>
                                     </div>
 
@@ -274,7 +262,8 @@ export default function OrdersPage() {
                                                     (item) =>
                                                         `${item.quantity} ×`
                                                 )
-                                                .join(", ")} sản phẩm
+                                                .join(", ")}{" "}
+                                            sản phẩm
                                         </p>
                                     </div>
                                 )}

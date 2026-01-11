@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import axiosInstance from "@/lib/axios";
 import Link from "next/link";
+import { formatVND } from "@/lib/currency";
+import FullScreenLoader from "@/components/ui/FullScreenLoader";
 
 interface OrderItem {
     id: string;
@@ -67,18 +69,7 @@ export default function OrderDetailPage() {
     }
 
     if (isLoading) {
-        return (
-            <div className="bg-background-light dark:bg-background-dark min-h-screen">
-                <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                        <p className="mt-4 text-gray-600 dark:text-text-secondary-dark">
-                            Đang tải...
-                        </p>
-                    </div>
-                </main>
-            </div>
-        );
+        return <FullScreenLoader />;
     }
 
     if (error || !order) {
@@ -176,7 +167,12 @@ export default function OrderDetailPage() {
                         Chi Tiết Đơn Hàng
                     </h1>
                     <p className="text-slate-500 dark:text-text-secondary-dark text-lg font-medium">
-                        {order.items.length} sản phẩm, {order.items.reduce((sum, item) => sum + item.quantity, 0)} đơn vị
+                        {order.items.length} sản phẩm,{" "}
+                        {order.items.reduce(
+                            (sum, item) => sum + item.quantity,
+                            0
+                        )}{" "}
+                        đơn vị
                     </p>
                 </div>
 
@@ -185,23 +181,33 @@ export default function OrderDetailPage() {
                     {/* Left Column: Items */}
                     <div className="lg:col-span-2 space-y-4">
                         {/* Status Badge */}
-                        <div className={`p-4 rounded-xl border flex items-center gap-3 ${
-                            statusBg[order.status as keyof typeof statusBg]
-                        } ${statusColor[order.status as keyof typeof statusColor].replace('text-', 'border-')}`}>
+                        <div
+                            className={`p-4 rounded-xl border flex items-center gap-3 ${
+                                statusBg[order.status as keyof typeof statusBg]
+                            } ${statusColor[
+                                order.status as keyof typeof statusColor
+                            ].replace("text-", "border-")}`}
+                        >
                             <span className="material-symbols-outlined text-2xl">
                                 {order.status === "PAID"
                                     ? "verified_user"
                                     : order.status === "PENDING_PAYMENT"
-                                      ? "schedule"
-                                      : "cancel"}
+                                    ? "schedule"
+                                    : "cancel"}
                             </span>
                             <div>
                                 <p className="font-bold">
-                                    {statusLabel[order.status as keyof typeof statusLabel]}
+                                    {
+                                        statusLabel[
+                                            order.status as keyof typeof statusLabel
+                                        ]
+                                    }
                                 </p>
                                 {order.status === "PAID" && order.paid_at && (
                                     <p className="text-xs">
-                                        {new Date(order.paid_at).toLocaleString("vi-VN")}
+                                        {new Date(order.paid_at).toLocaleString(
+                                            "vi-VN"
+                                        )}
                                     </p>
                                 )}
                             </div>
@@ -218,12 +224,12 @@ export default function OrderDetailPage() {
                                         Sản phẩm {index + 1}
                                     </h3>
                                     <p className="text-sm text-slate-600 dark:text-text-secondary-dark mt-1">
-                                        {item.quantity} × {item.price_snapshot.toLocaleString("vi-VN")}đ
+                                        {item.quantity} × {formatVND(item.price_snapshot)}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-bold text-slate-900 dark:text-white">
-                                        {(item.price_snapshot * item.quantity).toLocaleString("vi-VN")}đ
+                                        {formatVND(item.price_snapshot * item.quantity)}
                                     </p>
                                 </div>
                             </div>
@@ -240,10 +246,18 @@ export default function OrderDetailPage() {
                                 </p>
                                 <div className="text-sm text-slate-600 dark:text-text-secondary-dark space-y-1">
                                     <p>
-                                        <span className="font-semibold">Mã đơn:</span> {order.id.slice(0, 12)}...
+                                        <span className="font-semibold">
+                                            Mã đơn:
+                                        </span>{" "}
+                                        {order.id.slice(0, 12)}...
                                     </p>
                                     <p>
-                                        <span className="font-semibold">Tạo lúc:</span> {new Date(order.created_at).toLocaleString("vi-VN")}
+                                        <span className="font-semibold">
+                                            Tạo lúc:
+                                        </span>{" "}
+                                        {new Date(
+                                            order.created_at
+                                        ).toLocaleString("vi-VN")}
                                     </p>
                                 </div>
                             </div>
@@ -261,13 +275,17 @@ export default function OrderDetailPage() {
                                 <div className="flex justify-between text-slate-600 dark:text-text-secondary-dark">
                                     <span>Tạm tính:</span>
                                     <span className="font-semibold text-slate-900 dark:text-white">
-                                        {order.total_amount.toLocaleString("vi-VN")}đ
+                                        {formatVND(order.total_amount)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-slate-600 dark:text-text-secondary-dark">
                                     <span>Số lượng:</span>
                                     <span className="font-semibold text-slate-900 dark:text-white">
-                                        {order.items.reduce((sum, item) => sum + item.quantity, 0)} sản phẩm
+                                        {order.items.reduce(
+                                            (sum, item) => sum + item.quantity,
+                                            0
+                                        )}{" "}
+                                        sản phẩm
                                     </span>
                                 </div>
                             </div>
@@ -278,7 +296,7 @@ export default function OrderDetailPage() {
                                 </span>
                                 <div className="text-right">
                                     <span className="text-3xl font-black text-primary">
-                                        {order.total_amount.toLocaleString("vi-VN")}đ
+                                        {formatVND(order.total_amount)}
                                     </span>
                                     <p className="text-[10px] text-slate-400 uppercase tracking-tighter">
                                         Bao gồm VAT

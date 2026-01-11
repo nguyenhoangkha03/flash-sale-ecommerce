@@ -1,37 +1,25 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCartStore } from '@/store/cartStore';
 import { CartItemComponent } from '@/components/cart/CartItem';
 import { CartSummary } from '@/components/cart/CartSummary';
 
 export default function CartPage() {
+  const router = useRouter();
   const auth = useAuth();
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
 
-  // Redirect to login if not authenticated
-  if (!auth.isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Vui lòng đăng nhập
-          </h1>
-          <p className="text-gray-600 mb-8">
-            Bạn cần đăng nhập để xem giỏ hàng của mình
-          </p>
-          <Link
-            href="/login"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Đăng nhập
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const handleCheckout = () => {
+    if (!auth.isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    router.push('/checkout');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -92,7 +80,7 @@ export default function CartPage() {
             </div>
 
             {/* Summary */}
-            <CartSummary />
+            <CartSummary handleCheckout={handleCheckout} />
           </div>
         )}
       </div>

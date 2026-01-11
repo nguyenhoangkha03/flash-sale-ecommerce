@@ -174,7 +174,7 @@ export function ProductCard({ product }: ProductCardProps) {
                             <span>Danh Sách Chờ</span>
                         ) : (
                             <>
-                                <span>Mua Ngay</span>
+                                <span>Thêm Giỏ Hàng</span>
                                 <span className="material-symbols-outlined text-[16px]">
                                     arrow_forward
                                 </span>

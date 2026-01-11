@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useCartStore } from "@/store/cartStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axiosInstance from "@/lib/axios";
 import toast from "react-hot-toast";
 import { ReservationTimer } from "@/components/reservation/ReservationTimer";
+
+const RESERVATION_STORAGE_KEY = "active_reservation";
 
 export function CartSummary({
     handleCheckout,
@@ -27,6 +29,31 @@ export function CartSummary({
         expiresAt: string;
     } | null>(null);
     const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+
+    // Load reservation from localStorage on mount
+    useEffect(() => {
+        const savedReservation = localStorage.getItem(RESERVATION_STORAGE_KEY);
+        if (savedReservation) {
+            try {
+                const reservation = JSON.parse(savedReservation);
+                setActiveReservation(reservation);
+            } catch (e) {
+                localStorage.removeItem(RESERVATION_STORAGE_KEY);
+            }
+        }
+    }, []);
+
+    // Save reservation to localStorage when it changes
+    useEffect(() => {
+        if (activeReservation) {
+            localStorage.setItem(
+                RESERVATION_STORAGE_KEY,
+                JSON.stringify(activeReservation)
+            );
+        } else {
+            localStorage.removeItem(RESERVATION_STORAGE_KEY);
+        }
+    }, [activeReservation]);
 
     // Generate idempotency key on first hold attempt
     const getIdempotencyKey = () => {

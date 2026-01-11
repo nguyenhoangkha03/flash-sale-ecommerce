@@ -4,16 +4,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useCartStore } from "@/store/cartStore";
+import { useState } from "react";
 
 export function Navbar() {
     const router = useRouter();
     const auth = useAuth();
-    const cartItems = useCartStore((state) => state.items);
     const totalItems = useCartStore((state) => state.getTotalItems());
+
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     const handleLogout = () => {
         auth.logout();
         router.push("/login");
+        setUserMenuOpen(false);
     };
 
     return (
@@ -83,24 +86,116 @@ export function Navbar() {
 
                         {/* User Profile / Auth */}
                         {auth.isAuthenticated ? (
-                            <div className="flex items-center gap-3">
-                                <span className="text-sm text-gray-600 dark:text-text-secondary-dark hidden sm:block">
-                                    {auth.user?.email}
-                                </span>
-                                {auth.user?.role === "ADMIN" && (
-                                    <Link
-                                        href="/admin/orders"
-                                        className="px-3 py-1 text-xs font-semibold bg-primary text-white rounded hover:bg-primary-hover transition"
-                                    >
-                                        Admin
-                                    </Link>
-                                )}
+                            <div className="relative">
+                                {/* User Email Button */}
                                 <button
-                                    onClick={handleLogout}
-                                    className="px-3 py-1 text-xs font-semibold bg-red-600 text-white rounded hover:bg-red-700 transition"
+                                    onClick={() =>
+                                        setUserMenuOpen(!userMenuOpen)
+                                    }
+                                    className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
                                 >
-                                    Logout
+                                    <span className="text-sm text-gray-600 dark:text-text-secondary-dark hidden sm:block">
+                                        {auth.user?.email}
+                                    </span>
+                                    <span className="material-symbols-outlined text-lg text-gray-600 dark:text-text-secondary-dark">
+                                        {userMenuOpen
+                                            ? "expand_less"
+                                            : "expand_more"}
+                                    </span>
                                 </button>
+
+                                {/* Dropdown Menu */}
+                                {userMenuOpen && (
+                                    <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-card-dark rounded-lg shadow-lg border border-gray-200 dark:border-accent-brown overflow-hidden z-10">
+                                        {/* User Email Display */}
+                                        <div className="px-4 py-3 border-b border-gray-200 dark:border-accent-brown">
+                                            <p className="text-xs text-gray-500 dark:text-text-secondary-dark">
+                                                Tài khoản
+                                            </p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                                {auth.user?.email}
+                                            </p>
+                                        </div>
+
+                                        {/* Menu Items */}
+                                        <div className="py-2">
+                                            <Link
+                                                href="/reservations"
+                                                onClick={() =>
+                                                    setUserMenuOpen(false)
+                                                }
+                                                className="block px-4 py-2 text-sm text-gray-700 dark:text-text-secondary-dark hover:bg-gray-50 dark:hover:bg-accent-brown transition-colors"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-lg">
+                                                        schedule
+                                                    </span>
+                                                    Đơn Hàng Đã Giữ Chỗ
+                                                </span>
+                                            </Link>
+
+                                            <Link
+                                                href="/orders"
+                                                onClick={() =>
+                                                    setUserMenuOpen(false)
+                                                }
+                                                className="block px-4 py-2 text-sm text-gray-700 dark:text-text-secondary-dark hover:bg-gray-50 dark:hover:bg-accent-brown transition-colors"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-lg">
+                                                        shopping_bag
+                                                    </span>
+                                                    Đơn Hàng Của Tôi
+                                                </span>
+                                            </Link>
+
+                                            {auth.user?.role === "ADMIN" && (
+                                                <Link
+                                                    href="/admin/orders"
+                                                    onClick={() =>
+                                                        setUserMenuOpen(false)
+                                                    }
+                                                    className="block px-4 py-2 text-sm text-primary hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2">
+                                                        <span className="material-symbols-outlined text-lg">
+                                                            admin_panel_settings
+                                                        </span>
+                                                        Bảng Điều Khiển Admin
+                                                    </span>
+                                                </Link>
+                                            )}
+
+                                            <Link
+                                                href="/"
+                                                onClick={() =>
+                                                    setUserMenuOpen(false)
+                                                }
+                                                className="block px-4 py-2 text-sm text-gray-700 dark:text-text-secondary-dark hover:bg-gray-50 dark:hover:bg-accent-brown transition-colors"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-lg">
+                                                        settings
+                                                    </span>
+                                                    Cài Đặt Tài Khoản
+                                                </span>
+                                            </Link>
+                                        </div>
+
+                                        {/* Logout */}
+                                        <div className="border-t border-gray-200 dark:border-accent-brown py-2">
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                                            >
+                                                <span className="material-symbols-outlined text-lg">
+                                                    logout
+                                                </span>
+                                                Đăng Xuất
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">

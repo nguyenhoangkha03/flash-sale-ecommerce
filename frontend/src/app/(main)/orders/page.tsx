@@ -60,73 +60,126 @@ export default function OrdersPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 py-12 px-4 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600">Đang tải...</p>
-                </div>
+            <div className="bg-background-light dark:bg-background-dark min-h-screen">
+                <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
+                    <div className="text-center py-12">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                        <p className="mt-4 text-gray-600 dark:text-text-secondary-dark">
+                            Đang tải...
+                        </p>
+                    </div>
+                </main>
             </div>
         );
     }
 
     const statusColor = {
-        PAID: "bg-green-100 text-green-800",
-        PENDING_PAYMENT: "bg-yellow-100 text-yellow-800",
-        CANCELLED: "bg-red-100 text-red-800",
-        EXPIRED: "bg-red-100 text-red-800",
+        PAID: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400",
+        PENDING_PAYMENT:
+            "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400",
+        CANCELLED:
+            "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400",
+        EXPIRED:
+            "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400",
     };
 
     const statusLabel = {
-        PAID: "Đã thanh toán",
-        PENDING_PAYMENT: "Chờ thanh toán",
-        CANCELLED: "Đã hủy",
-        EXPIRED: "Hết hạn",
+        PAID: "✓ Đã thanh toán",
+        PENDING_PAYMENT: "⏳ Chờ thanh toán",
+        CANCELLED: "✗ Đã hủy",
+        EXPIRED: "✗ Hết hạn",
+    };
+
+    const statusIcon = {
+        PAID: "verified_user",
+        PENDING_PAYMENT: "schedule",
+        CANCELLED: "cancel",
+        EXPIRED: "error",
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Đơn hàng của tôi
-                    </h1>
+        <div className="bg-background-light dark:bg-background-dark min-h-screen">
+            <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
+                {/* Breadcrumbs */}
+                <div className="flex flex-wrap gap-2 mb-6">
                     <Link
                         href="/"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="text-slate-500 dark:text-text-secondary-dark text-sm font-medium hover:underline"
                     >
-                        Tiếp tục mua sắm
+                        Trang Chủ
+                    </Link>
+                    <span className="text-slate-400 dark:text-text-secondary-dark text-sm">
+                        /
+                    </span>
+                    <span className="text-slate-900 dark:text-white text-sm font-semibold">
+                        Đơn Hàng Của Tôi
+                    </span>
+                </div>
+
+                {/* Page Heading */}
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 border-b border-slate-200 dark:border-accent-brown pb-8">
+                    <div className="flex flex-col gap-2">
+                        <h1 className="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">
+                            Đơn Hàng Của Tôi
+                        </h1>
+                        <p className="text-slate-500 dark:text-text-secondary-dark text-lg font-medium">
+                            {orders.length} đơn hàng
+                        </p>
+                    </div>
+
+                    <Link
+                        href="/"
+                        className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-bold"
+                    >
+                        Tiếp Tục Mua Sắm
                     </Link>
                 </div>
 
                 {/* Filter */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Lọc theo trạng thái:
+                <div className="mb-8">
+                    <label className="block text-sm font-bold text-slate-900 dark:text-white mb-3">
+                        Lọc Theo Trạng Thái:
                     </label>
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-4 py-2 border border-slate-200 dark:border-accent-brown rounded-lg bg-white dark:bg-card-dark text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                     >
-                        <option value="">Tất cả</option>
-                        <option value="PAID">Đã thanh toán</option>
-                        <option value="PENDING_PAYMENT">Chờ thanh toán</option>
-                        <option value="CANCELLED">Đã hủy</option>
-                        <option value="EXPIRED">Hết hạn</option>
+                        <option value="">Tất Cả</option>
+                        <option value="PAID">✓ Đã Thanh Toán</option>
+                        <option value="PENDING_PAYMENT">⏳ Chờ Thanh Toán</option>
+                        <option value="CANCELLED">✗ Đã Hủy</option>
+                        <option value="EXPIRED">✗ Hết Hạn</option>
                     </select>
                 </div>
 
                 {/* Orders List */}
                 {orders.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-lg shadow">
-                        <p className="text-gray-600 mb-4">
+                    <div className="text-center py-12">
+                        <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                            />
+                        </svg>
+                        <h3 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
                             Không có đơn hàng nào
+                        </h3>
+                        <p className="mt-2 text-gray-600 dark:text-text-secondary-dark">
+                            Bạn chưa có đơn hàng
                         </p>
                         <Link
                             href="/"
-                            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="mt-6 inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-bold"
                         >
-                            Bắt đầu mua sắm
+                            Bắt Đầu Mua Sắm
                         </Link>
                     </div>
                 ) : (
@@ -134,63 +187,102 @@ export default function OrdersPage() {
                         {orders.map((order) => (
                             <Link
                                 key={order.id}
-                                href={`/order/${order.id}`}
-                                className="block bg-white rounded-lg shadow p-6 hover:shadow-lg transition"
+                                href={`/orders/${order.id}`}
+                                className="block bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-accent-brown p-6 hover:shadow-lg dark:hover:shadow-xl transition-shadow"
                             >
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {/* Order ID */}
                                     <div>
-                                        <p className="text-sm text-gray-500">
-                                            Mã đơn hàng
+                                        <p className="text-xs font-bold text-slate-500 dark:text-text-secondary-dark uppercase mb-2">
+                                            Mã Đơn Hàng
                                         </p>
-                                        <p className="font-mono font-semibold text-gray-900 break-all">
-                                            {order.id.substring(0, 8)}...
+                                        <p className="font-mono font-bold text-slate-900 dark:text-white text-sm">
+                                            {order.id.substring(0, 12)}...
                                         </p>
                                     </div>
+
+                                    {/* Total Amount */}
                                     <div>
-                                        <p className="text-sm text-gray-500">
-                                            Tổng tiền
+                                        <p className="text-xs font-bold text-slate-500 dark:text-text-secondary-dark uppercase mb-2">
+                                            Tổng Tiền
                                         </p>
-                                        <p className="font-bold text-blue-600">
+                                        <p className="text-2xl font-black text-primary">
                                             {order.total_amount.toLocaleString(
                                                 "vi-VN"
                                             )}
                                             đ
                                         </p>
                                     </div>
+
+                                    {/* Status */}
                                     <div>
-                                        <p className="text-sm text-gray-500">
-                                            Trạng thái
+                                        <p className="text-xs font-bold text-slate-500 dark:text-text-secondary-dark uppercase mb-2">
+                                            Trạng Thái
                                         </p>
-                                        <span
-                                            className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                                        <div
+                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${
                                                 statusColor[
                                                     order.status as keyof typeof statusColor
                                                 ]
                                             }`}
                                         >
+                                            <span className="material-symbols-outlined text-base">
+                                                {
+                                                    statusIcon[
+                                                        order.status as keyof typeof statusIcon
+                                                    ]
+                                                }
+                                            </span>
                                             {
                                                 statusLabel[
                                                     order.status as keyof typeof statusLabel
                                                 ]
                                             }
-                                        </span>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm text-gray-500">
-                                            Thời gian
+
+                                    {/* Time */}
+                                    <div className="lg:text-right">
+                                        <p className="text-xs font-bold text-slate-500 dark:text-text-secondary-dark uppercase mb-2">
+                                            Thời Gian
                                         </p>
-                                        <p className="text-gray-900">
+                                        <p className="font-semibold text-slate-900 dark:text-white">
                                             {new Date(
                                                 order.created_at
                                             ).toLocaleDateString("vi-VN")}
                                         </p>
+                                        <p className="text-xs text-slate-600 dark:text-text-secondary-dark">
+                                            {new Date(
+                                                order.created_at
+                                            ).toLocaleTimeString("vi-VN", {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </p>
                                     </div>
                                 </div>
+
+                                {/* Items Preview */}
+                                {order.items.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                        <p className="text-xs font-bold text-slate-500 dark:text-text-secondary-dark uppercase mb-2">
+                                            Sản Phẩm ({order.items.length})
+                                        </p>
+                                        <p className="text-sm text-slate-700 dark:text-text-secondary-dark">
+                                            {order.items
+                                                .map(
+                                                    (item) =>
+                                                        `${item.quantity} ×`
+                                                )
+                                                .join(", ")} sản phẩm
+                                        </p>
+                                    </div>
+                                )}
                             </Link>
                         ))}
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }

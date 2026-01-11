@@ -45,6 +45,15 @@ export class ReservationsController {
     return this.reservationsService.getUserReservations(user.userId, status);
   }
 
+  @Get('user/active')
+  @UseGuards(JwtAuthGuard)
+  async getUserActiveReservations(@CurrentUser() user: any) {
+    return this.reservationsService.getUserReservations(
+      user.userId,
+      ReservationStatus.ACTIVE,
+    );
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   async getReservation(

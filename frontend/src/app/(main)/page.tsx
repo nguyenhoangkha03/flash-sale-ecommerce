@@ -8,7 +8,7 @@ import { RealtimeIndicator } from "@/components/ui/RealtimeIndicator";
 
 export default function Home() {
     const { on, off, isConnected } = useSocket();
-    const { products, isLoading } = useProducts(1, 8);
+    const { products, isLoading } = useProducts(1, 20);
     const [localProducts, setLocalProducts] = useState(products);
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSequenceRef = useRef<Map<string, number>>(new Map());

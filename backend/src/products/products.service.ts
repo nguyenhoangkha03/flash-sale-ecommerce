@@ -9,7 +9,7 @@ import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AuditLogService } from '../audit/audit-log.service';
-import { PaginationMeta } from 'src/common/interfaces/pagination-meta.interface';
+import { PaginationMeta } from '../common/interfaces/pagination-meta.interface';
 
 @Injectable()
 export class ProductsService {

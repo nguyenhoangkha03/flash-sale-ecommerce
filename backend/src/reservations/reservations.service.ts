@@ -130,7 +130,7 @@ export class ReservationsService {
       );
 
       await this.auditLogService.logAction({
-        userId,
+        user_id: userId,
         action: 'RESERVATION_CREATED',
         entityType: 'Reservation',
         entityId: savedReservation.id,
@@ -163,11 +163,13 @@ export class ReservationsService {
       }
 
       // Emit reservation created event
-      const reservationWithItems = await this.getReservationWithItems(savedReservation.id);
+      const reservationWithItems = await this.getReservationWithItems(
+        savedReservation.id,
+      );
       this.eventsService.emitReservationCreated({
         reservationId: savedReservation.id,
         userId,
-        items: reservationWithItems.items.map(item => ({
+        items: reservationWithItems.items.map((item) => ({
           productId: item.product_id,
           quantity: item.quantity,
           priceSnapshot: item.price_snapshot,
@@ -252,7 +254,7 @@ export class ReservationsService {
 
       // Log Audit
       await this.auditLogService.logAction({
-        userId,
+        user_id: userId,
         action: 'RESERVATION_RELEASED',
         entityType: 'Reservation',
         entityId: reservationId,
@@ -284,7 +286,10 @@ export class ReservationsService {
 
       // Emit reservation expired event if auto-expired
       if (isAutoExpired && reservation.user_id) {
-        this.eventsService.emitReservationExpired(reservationId, reservation.user_id);
+        this.eventsService.emitReservationExpired(
+          reservationId,
+          reservation.user_id,
+        );
       }
     } catch (error) {
       await queryRunner.rollbackTransaction();

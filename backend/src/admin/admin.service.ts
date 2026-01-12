@@ -95,11 +95,15 @@ export class AdminService {
 
     const logs = await this.auditLogsRepository.find({
       where,
+      relations: ['user'],
       skip,
       take: limit,
       order: { created_at: 'DESC' },
     });
 
-    return logs;
+    return logs.map((log: any) => ({
+      ...log,
+      user: { email: log.user?.email },
+    }));
   }
 }

@@ -108,7 +108,7 @@ export class ProductsService {
 
     // Log audit
     await this.auditLogService.logAction({
-      userId,
+      user_id: userId,
       action: 'PRODUCT_CREATED',
       entityType: 'Product',
       entityId: savedProduct.id,
@@ -145,7 +145,7 @@ export class ProductsService {
 
     // Log audit
     await this.auditLogService.logAction({
-      userId,
+      user_id: userId,
       action: 'PRODUCT_UPDATED',
       entityType: 'Product',
       entityId: id,
@@ -165,7 +165,7 @@ export class ProductsService {
 
     // Log audit
     await this.auditLogService.logAction({
-      userId,
+      user_id: userId,
       action: 'PRODUCT_DELETED',
       entityType: 'Product',
       entityId: id,

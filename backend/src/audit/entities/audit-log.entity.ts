@@ -4,14 +4,17 @@ import {
   Entity,
   Index,
   PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('audit_logs')
 export class AuditLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   user_id: string;
 
   @Index()
@@ -37,4 +40,9 @@ export class AuditLog {
   @Index()
   @CreateDateColumn()
   created_at: Date;
+
+  // Relations
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'user_id' })
+  user?: User;
 }

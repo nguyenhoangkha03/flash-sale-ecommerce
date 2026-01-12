@@ -61,17 +61,16 @@ export class EventsService {
   // Emit reservation created event
   emitReservationCreated(reservation: ReservationEvent) {
     try {
-      this.eventsGateway.emitToUser(reservation.userId, 'reservation:created', {
+      const eventData = {
         ...reservation,
+        id: reservation.reservationId, // Map reservationId → id for frontend
         timestamp: new Date(),
-      });
+      };
 
-      // Also broadcast to all connected clients
-      this.eventsGateway.emitToAll('reservation:created', {
-        reservationId: reservation.reservationId,
-        itemsCount: reservation.items.length,
-        timestamp: new Date(),
-      });
+      this.eventsGateway.emitToUser(reservation.userId, 'reservation:created', eventData);
+
+      // Also broadcast to all connected clients with full data
+      this.eventsGateway.emitToAll('reservation:created', eventData);
 
       this.logger.log(`✓ Phát sóng đơn giữ hàng được tạo ${reservation.reservationId}`);
     } catch (error) {

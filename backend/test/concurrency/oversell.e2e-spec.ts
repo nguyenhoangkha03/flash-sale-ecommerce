@@ -4,6 +4,8 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { Product } from '../../src/products/entities/product.entity';
 import { Reservation } from '../../src/reservations/entities/reservation.entity';
+import { Order } from '../../src/orders/entities/order.entity';
+import { AuditLog } from '../../src/audit/entities/audit-log.entity';
 import { User, UserRole } from '../../src/users/entities/user.entity';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -48,11 +50,15 @@ describe('Concurrency Control Tests', () => {
 
   beforeEach(async () => {
     try {
+      // Delete in order: Orders → Reservations → AuditLogs → Products → Users
+      // (follow FK relationships)
+      await dataSource.createQueryBuilder().delete().from(Order).execute();
       await dataSource
         .createQueryBuilder()
         .delete()
         .from(Reservation)
         .execute();
+      await dataSource.createQueryBuilder().delete().from(AuditLog).execute();
       await dataSource.createQueryBuilder().delete().from(Product).execute();
       await dataSource.createQueryBuilder().delete().from(User).execute();
 

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { AuditLog } from './entities/audit-log.entity';
 
 interface LogActionDto {
-  userId?: string;
+  user_id?: string;
   action: string;
   entityType: string;
   entityId?: string;
@@ -22,7 +22,7 @@ export class AuditLogService {
 
   async logAction(dto: LogActionDto): Promise<AuditLog> {
     const auditLog = this.auditLogRepository.create({
-      user_id: dto.userId,
+      user_id: dto.user_id,
       action: dto.action,
       entity_type: dto.entityType,
       entity_id: dto.entityId,

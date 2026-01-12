@@ -42,5 +42,6 @@ coverage/
 
 *.md
 !README.md
+!DESIGN.md
 
 /backup

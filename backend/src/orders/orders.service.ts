@@ -7,7 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { Reservation, ReservationStatus } from '../reservations/entities/reservation.entity';
+import {
+  Reservation,
+  ReservationStatus,
+} from '../reservations/entities/reservation.entity';
 import { ReservationItem } from '../reservations/entities/reservation-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { AuditLogService } from '../audit/audit-log.service';
@@ -90,9 +93,7 @@ export class OrdersService {
       }
 
       if (new Date(reservation.expires_at) < new Date()) {
-        throw new BadRequestException(
-          'Reservation đã hết hạn!',
-        );
+        throw new BadRequestException('Reservation đã hết hạn!');
       }
 
       // Get reservation items
@@ -143,7 +144,7 @@ export class OrdersService {
 
       // Log Audit
       await this.auditLogService.logAction({
-        userId,
+        user_id: userId,
         action: 'ORDER_CREATED',
         entityType: 'Order',
         entityId: savedOrder.id,
@@ -260,7 +261,7 @@ export class OrdersService {
 
       // Log Audit
       await this.auditLogService.logAction({
-        userId,
+        user_id: userId,
         action: 'ORDER_PAID',
         entityType: 'Order',
         entityId: orderId,
@@ -364,7 +365,7 @@ export class OrdersService {
         await queryRunner.manager.update(
           Reservation,
           { id: order.reservation_id },
-          { status: ReservationStatus.ACTIVE },
+          { status: ReservationStatus.EXPIRED },
         );
       }
 
@@ -377,7 +378,7 @@ export class OrdersService {
 
       // Log Audit
       await this.auditLogService.logAction({
-        userId,
+        user_id: userId,
         action: 'ORDER_CANCELLED',
         entityType: 'Order',
         entityId: orderId,
@@ -385,6 +386,23 @@ export class OrdersService {
       });
 
       await queryRunner.commitTransaction();
+
+      // Emit stock changed events for cancelled items
+      const cancelledOrder = await this.getOrderWithItems(orderId);
+      for (const item of cancelledOrder.items) {
+        const product = await this.productsRepository.findOne({
+          where: { id: item.product_id },
+        });
+        if (product) {
+          this.eventsService.emitStockChanged(item.product_id, {
+            productId: item.product_id,
+            availableStock: product.available_stock,
+            reservedStock: product.reserved_stock,
+            soldStock: product.sold_stock,
+            timestamp: new Date(),
+          });
+        }
+      }
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -491,7 +509,7 @@ export class OrdersService {
 
       // Log Audit
       await this.auditLogService.logAction({
-        userId: order.user_id,
+        user_id: order.user_id,
         action: 'ORDER_EXPIRED',
         entityType: 'Order',
         entityId: orderId,

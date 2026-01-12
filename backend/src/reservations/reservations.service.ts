@@ -264,6 +264,28 @@ export class ReservationsService {
 
       // Commit
       await queryRunner.commitTransaction();
+
+      // Emit stock changed events AFTER commit
+      for (const item of items) {
+        const updatedProduct = await this.productsRepository.findOne({
+          where: { id: item.product_id },
+        });
+
+        if (updatedProduct) {
+          this.eventsService.emitStockChanged(item.product_id, {
+            productId: item.product_id,
+            availableStock: updatedProduct.available_stock,
+            reservedStock: updatedProduct.reserved_stock,
+            soldStock: updatedProduct.sold_stock,
+            timestamp: new Date(),
+          });
+        }
+      }
+
+      // Emit reservation expired event if auto-expired
+      if (isAutoExpired && reservation.user_id) {
+        this.eventsService.emitReservationExpired(reservationId, reservation.user_id);
+      }
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -275,7 +297,7 @@ export class ReservationsService {
   async getReservationWithItems(id: string): Promise<Reservation> {
     const reservation = await this.reservationsRepository.findOne({
       where: { id },
-      relations: ['items'],
+      relations: ['items', 'items.product'],
     });
 
     if (!reservation) {

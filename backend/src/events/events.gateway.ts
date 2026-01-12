@@ -3,6 +3,9 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
@@ -16,6 +19,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger(EventsGateway.name);
   private connectedClients = new Map<string, Socket>();
+  private productViewers = new Map<string, Set<string>>();
 
   handleConnection(client: Socket) {
     try {
@@ -61,6 +65,19 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
 
+      // Remove user from all product viewers
+      for (const [productId, viewers] of this.productViewers.entries()) {
+        viewers.delete(client.id);
+        if (viewers.size === 0) {
+          this.productViewers.delete(productId);
+        } else {
+          this.server.emit('product:viewers', {
+            productId,
+            viewerCount: viewers.size,
+          });
+        }
+      }
+
       if (userId) {
         this.logger.log(`✓ Người dùng ${userId} ngắt kết nối`);
       } else {
@@ -68,6 +85,66 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch (error) {
       this.logger.error(`Lỗi ngắt kết nối: ${error.message}`);
+    }
+  }
+
+  @SubscribeMessage('product:view')
+  handleProductView(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { productId: string },
+  ) {
+    try {
+      const { productId } = data;
+      if (!productId) return;
+
+      if (!this.productViewers.has(productId)) {
+        this.productViewers.set(productId, new Set());
+      }
+
+      this.productViewers.get(productId)!.add(client.id);
+      const viewerCount = this.productViewers.get(productId)!.size;
+
+      this.logger.log(
+        `👁️ Sản phẩm ${productId} đang được xem bởi ${viewerCount} người`,
+      );
+
+      this.server.emit('product:viewers', {
+        productId,
+        viewerCount,
+      });
+    } catch (error) {
+      this.logger.error(`Lỗi tracking product view: ${error.message}`);
+    }
+  }
+
+  @SubscribeMessage('product:unview')
+  handleProductUnview(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { productId: string },
+  ) {
+    try {
+      const { productId } = data;
+      if (!productId) return;
+
+      if (this.productViewers.has(productId)) {
+        this.productViewers.get(productId)!.delete(client.id);
+        const viewerCount = this.productViewers.get(productId)!.size;
+
+        if (viewerCount === 0) {
+          this.productViewers.delete(productId);
+        }
+
+        this.logger.log(
+          `👁️ Sản phẩm ${productId} còn ${viewerCount} người xem`,
+        );
+
+        this.server.emit('product:viewers', {
+          productId,
+          viewerCount,
+        });
+      }
+    } catch (error) {
+      this.logger.error(`Lỗi tracking product unview: ${error.message}`);
     }
   }
 

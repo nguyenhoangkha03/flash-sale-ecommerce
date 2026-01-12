@@ -293,6 +293,9 @@ export class OrdersService {
         }
       }
 
+      // Emit order paid event
+      this.eventsService.emitOrderPaid(orderId, userId, order.total_amount);
+
       return this.getOrderWithItems(orderId);
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -411,7 +414,7 @@ export class OrdersService {
 
     return this.ordersRepository.find({
       where,
-      relations: ['items'],
+      relations: ['items', 'items.product'],
       order: { created_at: 'DESC' },
     });
   }
@@ -419,7 +422,7 @@ export class OrdersService {
   async getOrder(id: string, userId: string): Promise<Order> {
     const order = await this.ordersRepository.findOne({
       where: { id },
-      relations: ['items'],
+      relations: ['items', 'items.product'],
     });
 
     if (!order) {
@@ -431,5 +434,102 @@ export class OrdersService {
     }
 
     return order;
+  }
+
+  async expireOrder(orderId: string): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Lock Order
+      const order = await queryRunner.manager.findOne(Order, {
+        where: { id: orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!order) {
+        throw new NotFoundException('Order không tìm thấy!');
+      }
+
+      if (order.status !== OrderStatus.PENDING_PAYMENT) {
+        throw new BadRequestException(
+          `Không thể hết hạn order với trạng thái: ${order.status}`,
+        );
+      }
+
+      // Get order items
+      const orderItems = await queryRunner.manager.find(OrderItem, {
+        where: { order_id: orderId },
+      });
+
+      // Restore reserved → available stock
+      for (const item of orderItems) {
+        const product = await queryRunner.manager.findOne(Product, {
+          where: { id: item.product_id },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        if (product) {
+          await queryRunner.manager.update(
+            Product,
+            { id: item.product_id },
+            {
+              available_stock: product.available_stock + item.quantity,
+              reserved_stock: product.reserved_stock - item.quantity,
+            },
+          );
+        }
+      }
+
+      // Update Order status to EXPIRED
+      await queryRunner.manager.update(
+        Order,
+        { id: orderId },
+        { status: OrderStatus.EXPIRED },
+      );
+
+      // Log Audit
+      await this.auditLogService.logAction({
+        userId: order.user_id,
+        action: 'ORDER_EXPIRED',
+        entityType: 'Order',
+        entityId: orderId,
+        details: {
+          amount: order.total_amount,
+        },
+      });
+
+      await queryRunner.commitTransaction();
+
+      // Emit stock changed events
+      const expiredOrderItems = await this.orderItemsRepository.find({
+        where: { order_id: orderId },
+      });
+
+      for (const item of expiredOrderItems) {
+        const updatedProduct = await this.productsRepository.findOne({
+          where: { id: item.product_id },
+        });
+
+        if (updatedProduct) {
+          this.eventsService.emitStockChanged(item.product_id, {
+            productId: item.product_id,
+            availableStock: updatedProduct.available_stock,
+            reservedStock: updatedProduct.reserved_stock,
+            soldStock: updatedProduct.sold_stock,
+            timestamp: new Date(),
+          });
+        }
+      }
+
+      // Emit order expired event
+      this.eventsService.emitOrderExpired(orderId, order.user_id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

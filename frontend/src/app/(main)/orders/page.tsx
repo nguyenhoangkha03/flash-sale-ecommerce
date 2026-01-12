@@ -88,7 +88,7 @@ export default function OrdersPage() {
 
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen">
-            <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
+            <main className="max-w-300 mx-auto w-full px-4 md:px-10 py-8">
                 {/* Breadcrumbs */}
                 <div className="flex flex-wrap gap-2 mb-6">
                     <Link

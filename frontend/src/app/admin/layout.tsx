@@ -1,84 +1,173 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import Link from 'next/link';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function AdminLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const auth = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+    const auth = useAuth();
 
-  useEffect(() => {
-    if (!auth.isAuthenticated) {
-      router.push('/login');
-      return;
+    useEffect(() => {
+        if (!auth.isAuthenticated && !auth.isLoading) {
+            router.push("/login");
+            return;
+        }
+
+        if (auth.user?.role !== "ADMIN" && !auth.isLoading) {
+            router.push("/");
+            return;
+        }
+    }, [auth.isAuthenticated, auth.user?.role, router]);
+
+    if (!auth.isAuthenticated || auth.user?.role !== "ADMIN") {
+        return null;
     }
 
-    if (auth.user?.role !== 'ADMIN') {
-      router.push('/');
-      return;
-    }
-  }, [auth.isAuthenticated, auth.user?.role, router]);
+    const isActive = (href: string) => pathname === href;
+    const getInitials = (email: string) => {
+        return email
+            .split("@")[0]
+            .split(".")
+            .map((part) => part[0].toUpperCase())
+            .join("")
+            .slice(0, 2);
+    };
 
-  if (!auth.isAuthenticated || auth.user?.role !== 'ADMIN') {
-    return null;
-  }
+    return (
+        <div className="flex h-screen w-full dark bg-background-light dark:bg-background-dark">
+            {/* Sidebar */}
+            <aside className="w-64 flex-shrink-0 flex flex-col border-r border-border-dark bg-background-dark">
+                <div className="flex flex-col gap-1 p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="flex items-center justify-center w-8 h-8 rounded bg-primary text-white">
+                            <span className="material-symbols-outlined text-[20px]">
+                                flash_on
+                            </span>
+                        </div>
+                        <div>
+                            <h1 className="text-white text-lg font-bold leading-none tracking-tight">
+                                FlashAdmin
+                            </h1>
+                            <p className="text-text-secondary text-xs font-medium">
+                                v2.4.0 • Enterprise
+                            </p>
+                        </div>
+                    </div>
+                    <nav className="flex flex-col gap-1">
+                        <Link
+                            href="/admin"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                pathname === "/admin"
+                                    ? "bg-surface-dark border border-border-dark/50 text-white shadow-sm"
+                                    : "text-text-secondary hover:bg-surface-dark hover:text-white"
+                            }`}
+                        >
+                            <span className="material-symbols-outlined">
+                                dashboard
+                            </span>
+                            <span className="text-sm font-medium">
+                                Dashboard
+                            </span>
+                        </Link>
+                        <Link
+                            href="/admin/orders"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                pathname === "/admin/orders"
+                                    ? "bg-surface-dark border border-border-dark/50 text-white shadow-sm"
+                                    : "text-text-secondary hover:bg-surface-dark hover:text-white"
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-primary font-variation-settings">
+                                shopping_bag
+                            </span>
+                            <span className="text-sm font-medium">
+                                Đơn hàng
+                            </span>
+                            <span className="ml-auto text-xs bg-primary text-white px-2 py-0.5 rounded-full">
+                                Live
+                            </span>
+                        </Link>
+                        <Link
+                            href="/admin/reservations"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                pathname === "/admin/reservations"
+                                    ? "bg-surface-dark border border-border-dark/50 text-white shadow-sm"
+                                    : "text-text-secondary hover:bg-surface-dark hover:text-white"
+                            }`}
+                        >
+                            <span className="material-symbols-outlined">
+                                calendar_today
+                            </span>
+                            <span className="text-sm font-medium">
+                                Giữ hàng
+                            </span>
+                        </Link>
+                        <Link
+                            href="/admin/products"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                pathname === "/admin/products"
+                                    ? "bg-surface-dark border border-border-dark/50 text-white shadow-sm"
+                                    : "text-text-secondary hover:bg-surface-dark hover:text-white"
+                            }`}
+                        >
+                            <span className="material-symbols-outlined">
+                                inventory_2
+                            </span>
+                            <span className="text-sm font-medium">
+                                Sản phẩm
+                            </span>
+                        </Link>
+                        <Link
+                            href="/admin/audit-logs"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                pathname === "/admin/audit-logs"
+                                    ? "bg-surface-dark border border-border-dark/50 text-white shadow-sm"
+                                    : "text-text-secondary hover:bg-surface-dark hover:text-white"
+                            }`}
+                        >
+                            <span className="material-symbols-outlined">
+                                description
+                            </span>
+                            <span className="text-sm font-medium">Nhật ký</span>
+                        </Link>
+                    </nav>
+                </div>
+                <div className="mt-auto p-6 border-t border-border-dark">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary hover:text-white transition-colors"
+                    >
+                        <span className="material-symbols-outlined">home</span>
+                        <span className="text-sm font-medium">Trang chủ</span>
+                    </Link>
+                    <div className="mt-4 flex items-center gap-3 px-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-orange-400 flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-primary/20">
+                            {getInitials(auth.user?.email || "AD")}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium text-white">
+                                Admin
+                            </span>
+                            <span className="text-xs text-text-secondary truncate">
+                                {auth.user?.email}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
 
-  return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white shadow-lg">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-gray-400 text-sm mt-1">{auth.user?.email}</p>
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col h-full overflow-hidden bg-background-light dark:bg-background-dark">
+                {children}
+            </main>
         </div>
-
-        <nav className="mt-8 space-y-2 px-4">
-          <Link
-            href="/admin/orders"
-            className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition"
-          >
-            📦 Đơn hàng
-          </Link>
-          <Link
-            href="/admin/reservations"
-            className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition"
-          >
-            🔖 Giữ hàng
-          </Link>
-          <Link
-            href="/admin/products"
-            className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition"
-          >
-            🛍️ Sản phẩm
-          </Link>
-          <Link
-            href="/admin/audit-logs"
-            className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition"
-          >
-            📋 Nhật ký hệ thống
-          </Link>
-        </nav>
-
-        <div className="mt-auto p-4 border-t border-gray-800">
-          <Link
-            href="/"
-            className="block px-4 py-2 text-center bg-gray-800 rounded-lg hover:bg-gray-700 transition text-sm"
-          >
-            ← Quay lại
-          </Link>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">{children}</div>
-      </main>
-    </div>
-  );
+    );
 }

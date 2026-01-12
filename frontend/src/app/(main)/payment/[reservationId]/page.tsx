@@ -8,12 +8,18 @@ import axiosInstance from "@/lib/axios";
 import { ReservationTimer } from "@/components/reservation/ReservationTimer";
 import toast from "react-hot-toast";
 import { formatVND } from "@/lib/currency";
+import FullScreenLoader from "@/components/ui/FullScreenLoader";
 
 interface ReservationItem {
     id: string;
     product_id: string;
     quantity: number;
     price_snapshot: number;
+    product?: {
+        id: string;
+        name: string;
+        image_url: string;
+    };
 }
 
 interface Reservation {
@@ -71,12 +77,12 @@ export default function PaymentPage() {
         fetchReservation();
     }, [reservationId, router]);
 
-    const handlePayment = async () => {
+    const handleCheckout = async () => {
         if (!reservation) return;
 
         setIsPaymentLoading(true);
         try {
-            // First create order from reservation with idempotency key
+            // Create order from reservation (status = PENDING_PAYMENT)
             const orderIdempotencyKey = `ord_${reservation.id}`;
             const orderResponse = await axiosInstance.post("/orders", {
                 reservation_id: reservation.id,
@@ -84,21 +90,16 @@ export default function PaymentPage() {
             });
             const order = orderResponse.data;
 
-            // Then pay the order with idempotency key
-            const paymentId = `pay_${Date.now()}`;
-            const paymentResponse = await axiosInstance.post(
-                `/orders/${order.id}/pay`,
-                {
-                    payment_id: paymentId,
-                }
+            toast.success(
+                "Đơn hàng đã được tạo. Vui lòng thanh toán trong 5 phút"
             );
-            toast.success("Thanh toán thành công!");
-            router.push(`/orders/${paymentResponse.data.id}`);
+            // Redirect to order detail page (PENDING_PAYMENT state)
+            router.push(`/orders/${order.id}`);
         } catch (err: any) {
             const errorMessage =
-                err.response?.data?.message || "Thanh toán thất bại";
+                err.response?.data?.message || "Tạo đơn hàng thất bại";
             toast.error(errorMessage);
-            console.error("Payment error:", err);
+            console.error("Checkout error:", err);
         } finally {
             setIsPaymentLoading(false);
         }
@@ -109,18 +110,7 @@ export default function PaymentPage() {
     };
 
     if (isLoading) {
-        return (
-            <div className="bg-background-light dark:bg-background-dark min-h-screen">
-                <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                        <p className="mt-4 text-gray-600 dark:text-text-secondary-dark">
-                            Đang tải...
-                        </p>
-                    </div>
-                </main>
-            </div>
-        );
+        return <FullScreenLoader />;
     }
 
     if (error || !reservation) {
@@ -185,7 +175,12 @@ export default function PaymentPage() {
                         Thanh Toán Đơn Giữ Hàng
                     </h1>
                     <p className="text-slate-500 dark:text-text-secondary-dark text-lg font-medium">
-                        {reservation.items.length} sản phẩm, {reservation.items.reduce((sum, item) => sum + item.quantity, 0)} đơn vị
+                        {reservation.items.length} sản phẩm,{" "}
+                        {reservation.items.reduce(
+                            (sum, item) => sum + item.quantity,
+                            0
+                        )}{" "}
+                        đơn vị
                     </p>
                 </div>
 
@@ -193,7 +188,8 @@ export default function PaymentPage() {
                 {reservationExpired && (
                     <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
                         <p className="text-red-700 dark:text-red-400 font-semibold">
-                            ⚠️ Đơn giữ hàng đã hết hạn. Hàng sẽ được trả lại kho.
+                            ⚠️ Đơn giữ hàng đã hết hạn. Hàng sẽ được trả lại
+                            kho.
                         </p>
                     </div>
                 )}
@@ -206,19 +202,42 @@ export default function PaymentPage() {
                         {reservation.items.map((item, index) => (
                             <div
                                 key={item.id}
-                                className="flex justify-between items-center p-4 border rounded-xl bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30"
+                                className="flex gap-4 p-4 border rounded-xl bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30"
                             >
+                                {/* Product Image */}
+                                <div className="flex-shrink-0">
+                                    {item.product?.image_url ? (
+                                        <img
+                                            src={item.product.image_url}
+                                            alt={item.product.name}
+                                            className="w-20 h-20 object-cover rounded-lg"
+                                        />
+                                    ) : (
+                                        <div className="w-20 h-20 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-slate-400">
+                                                image
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Product Info */}
                                 <div className="flex-1">
-                                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                                        Sản phẩm {index + 1}
+                                    <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2">
+                                        {item.product?.name || `Sản phẩm ${index + 1}`}
                                     </h3>
-                                    <p className="text-sm text-slate-600 dark:text-text-secondary-dark mt-1">
-                                        {item.quantity} × {formatVND(item.price_snapshot)}
+                                    <p className="text-sm text-slate-600 dark:text-text-secondary-dark mt-2">
+                                        {item.quantity} ×{" "}
+                                        {formatVND(item.price_snapshot)}
                                     </p>
                                 </div>
-                                <div className="text-right">
+
+                                {/* Total Price */}
+                                <div className="text-right flex-shrink-0">
                                     <p className="font-bold text-slate-900 dark:text-white">
-                                        {formatVND(item.price_snapshot * item.quantity)}
+                                        {formatVND(
+                                            item.price_snapshot * item.quantity
+                                        )}
                                     </p>
                                 </div>
                             </div>
@@ -235,16 +254,34 @@ export default function PaymentPage() {
                                 </p>
                                 <div className="text-sm text-slate-600 dark:text-text-secondary-dark space-y-1">
                                     <p>
-                                        <span className="font-semibold">Mã đơn:</span> {reservation.id.slice(0, 12)}...
+                                        <span className="font-semibold">
+                                            Mã đơn:
+                                        </span>{" "}
+                                        {reservation.id.slice(0, 12)}...
                                     </p>
                                     <p>
-                                        <span className="font-semibold">Trạng thái:</span>{" "}
-                                        <span className={reservation.status === "ACTIVE" ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                                            {reservation.status === "ACTIVE" ? "Đang chờ" : reservation.status}
+                                        <span className="font-semibold">
+                                            Trạng thái:
+                                        </span>{" "}
+                                        <span
+                                            className={
+                                                reservation.status === "ACTIVE"
+                                                    ? "text-green-600 font-semibold"
+                                                    : "text-red-600 font-semibold"
+                                            }
+                                        >
+                                            {reservation.status === "ACTIVE"
+                                                ? "Đang chờ"
+                                                : reservation.status}
                                         </span>
                                     </p>
                                     <p>
-                                        <span className="font-semibold">Tạo lúc:</span> {new Date(reservation.created_at).toLocaleString("vi-VN")}
+                                        <span className="font-semibold">
+                                            Tạo lúc:
+                                        </span>{" "}
+                                        {new Date(
+                                            reservation.created_at
+                                        ).toLocaleString("vi-VN")}
                                     </p>
                                 </div>
                             </div>
@@ -292,8 +329,10 @@ export default function PaymentPage() {
 
                             {/* Payment Button */}
                             <button
-                                onClick={handlePayment}
-                                disabled={isPaymentLoading || reservationExpired}
+                                onClick={handleCheckout}
+                                disabled={
+                                    isPaymentLoading || reservationExpired
+                                }
                                 className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all ${
                                     isPaymentLoading || reservationExpired
                                         ? "bg-slate-400 dark:bg-slate-600 cursor-not-allowed"
@@ -302,13 +341,13 @@ export default function PaymentPage() {
                             >
                                 {isPaymentLoading
                                     ? "Đang xử lý..."
-                                    : "Hoàn Tất Thanh Toán"}
+                                    : "Đặt Hàng"}
                             </button>
 
                             <p className="mt-3 text-xs text-slate-500 dark:text-text-secondary-dark text-center">
                                 {reservationExpired
                                     ? "Đơn giữ hàng đã hết hạn"
-                                    : "Bấm nút trên để hoàn tất thanh toán"}
+                                    : "Bấm nút trên để tạo đơn hàng (PENDING_PAYMENT)"}
                             </p>
 
                             <button

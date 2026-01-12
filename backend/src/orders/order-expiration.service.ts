@@ -30,6 +30,7 @@ export class OrderExpirationService {
           payment_expires_at: LessThanOrEqual(now),
         },
         take: 100,
+        relations: ['items'],
       });
 
       if (expiredOrders.length === 0) {
@@ -47,16 +48,8 @@ export class OrderExpirationService {
 
       for (const order of expiredOrders) {
         try {
-          // Update order status to EXPIRED
-          await this.ordersRepository.update(
-            { id: order.id },
-            { status: OrderStatus.EXPIRED },
-          );
-
-          // TODO: Release reservation back to available stock
-          // This would be done if we want to revert the reserved items
-          // For now, just mark order as expired
-
+          // Call the service method that handles expiration properly
+          await this.ordersService.expireOrder(order.id);
           successCount++;
           this.logger.log(`✓ Hết hạn thanh toán cho đơn hàng ${order.id}`);
 
@@ -99,10 +92,7 @@ export class OrderExpirationService {
 
     for (const order of expiredOrders) {
       try {
-        await this.ordersRepository.update(
-          { id: order.id },
-          { status: OrderStatus.EXPIRED },
-        );
+        await this.ordersService.expireOrder(order.id);
         successCount++;
       } catch (error) {
         errorCount++;

@@ -12,6 +12,7 @@ interface AuthState {
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
+    isInitialized: boolean;
     login: (email: string, password: string) => Promise<void>;
     register: (email: string, password: string, name?: string) => Promise<void>;
     logout: () => void;
@@ -22,7 +23,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     token: null,
     isAuthenticated: false,
-    isLoading: false,
+    isLoading: true,
+    isInitialized: false,
 
     login: async (email: string, password: string) => {
         set({ isLoading: true });
@@ -88,19 +90,27 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     loadUser: async () => {
-        set({ isLoading: true });
+        set({ isLoading: true, isInitialized: false });
         try {
             const token = localStorage.getItem("accessToken");
             const userStr = localStorage.getItem("user");
 
             if (token && userStr) {
                 const user = JSON.parse(userStr);
-                set({ user, token, isAuthenticated: true });
+                set({
+                    user,
+                    token,
+                    isAuthenticated: true,
+                    isInitialized: true,
+                });
+            } else {
+                set({ isInitialized: true });
             }
         } catch (error) {
             console.error("Failed to load user:", error);
             localStorage.removeItem("accessToken");
             localStorage.removeItem("user");
+            set({ isInitialized: true });
         } finally {
             set({ isLoading: false });
         }

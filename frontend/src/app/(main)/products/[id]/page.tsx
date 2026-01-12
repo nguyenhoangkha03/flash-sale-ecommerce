@@ -8,6 +8,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { RealtimeIndicator } from "@/components/ui/RealtimeIndicator";
 import toast from "react-hot-toast";
 import { Product } from "@/hooks/useProducts";
+import { formatVND } from "@/lib/currency";
 
 interface ProductDetailPageProps {
     params: Promise<{
@@ -204,17 +205,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                             </h1>
                             <div className="flex items-end gap-4 pb-4 border-b border-accent-brown">
                                 <span className="text-4xl font-bold text-primary">
-                                    {typeof product.price === "string"
-                                        ? parseFloat(
-                                              product.price
-                                          ).toLocaleString("vi-VN")
-                                        : Number(product.price).toLocaleString(
-                                              "vi-VN"
-                                          )}
-                                    <span className="text-lg">₫</span>
+                                    {formatVND(product.price)}
                                 </span>
                                 <span className="text-xl text-text-secondary-dark/60 line-through mb-1.5 font-medium">
-                                    {originalPrice.toLocaleString("vi-VN")}₫
+                                    {formatVND(originalPrice)}
                                 </span>
                                 <span className="bg-green-500/10 text-green-400 text-xs font-bold px-2 py-1 rounded mb-2 border border-green-500/20">
                                     SAVE {discountPercent}%

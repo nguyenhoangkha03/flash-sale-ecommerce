@@ -34,37 +34,59 @@ export default function RootLayout({
                 />
                 {/* Tailwind CSS */}
                 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-                {/* Tailwind Config */}
-                <script id="tailwind-config">
-                    {`tailwind.config = {
-                        darkMode: "class",
-                        theme: {
-                            extend: {
-                                colors: {
-                                    primary: "#f27f0d",
-                                    "primary-hover": "#d96e0a",
-                                    "background-light": "#f8f7f5",
-                                    "background-dark": "#221910",
-                                    "card-dark": "#2e2115",
-                                    "card-light": "#ffffff",
-                                    "accent-brown": "#493622",
-                                    "accent-brown-light": "#e8dfd6",
-                                    "text-secondary-dark": "#cbad90",
-                                    "text-secondary-light": "#6b5c4d",
+                {/* Tailwind Config - MỞ RỘNG */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            tailwind.config = {
+                                darkMode: "class",
+                                theme: {
+                                    extend: {
+                                        colors: {
+                                            primary: {
+                                                DEFAULT: "#f27f0d",
+                                                hover: "#d96e0a",
+                                                dark: "#d66c00",
+                                            },
+                                            "background-light": "#f8f7f5",
+                                            "background-dark": "#221910",
+                                            "card-dark": "#2e2115",
+                                            "card-light": "#ffffff",
+                                            "accent-brown": "#493622",
+                                            "accent-brown-light": "#e8dfd6",
+                                            "text-secondary-dark": "#cbad90",
+                                            "text-secondary-light": "#6b5c4d",
+                                            // Admin colors
+                                            "surface-dark": "#2d241b",
+                                            "surface-dark-highlight": "#3a2e23",
+                                            "border-dark": "#3f3225",
+                                            "text-secondary": "#cbad90",
+                                        },
+                                        fontFamily: {
+                                            display: ["Inter", "sans-serif"],
+                                            mono: [
+                                                "ui-monospace",
+                                                "SFMono-Regular",
+                                                "Menlo",
+                                                "Monaco",
+                                                "Consolas",
+                                                "Liberation Mono",
+                                                "Courier New",
+                                                "monospace",
+                                            ],
+                                        },
+                                        borderRadius: {
+                                            DEFAULT: "0.25rem",
+                                            lg: "0.5rem",
+                                            xl: "0.75rem",
+                                            full: "9999px",
+                                        },
+                                    },
                                 },
-                                fontFamily: {
-                                    display: ["Inter", "sans-serif"],
-                                },
-                                borderRadius: {
-                                    DEFAULT: "0.25rem",
-                                    lg: "0.5rem",
-                                    xl: "0.75rem",
-                                    full: "9999px",
-                                },
-                            },
-                        },
-                    };`}
-                </script>
+                            };
+                        `,
+                    }}
+                />
             </head>
             <body
                 className={`${inter.variable} antialiased dark bg-background-dark min-h-screen flex flex-col`}

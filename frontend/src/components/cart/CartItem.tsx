@@ -2,6 +2,7 @@
 
 import { useCartStore, CartItem } from "@/store/cartStore";
 import toast from "react-hot-toast";
+import { formatVND } from "@/lib/currency";
 
 interface CartItemProps {
     item: CartItem;
@@ -52,10 +53,7 @@ export function CartItemComponent({ item }: CartItemProps) {
                         </p>
                     </div>
                     <p className="text-lg font-bold text-slate-900 dark:text-white">
-                        {item.price.toLocaleString("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                        })}
+                        {formatVND(item.price)}
                     </p>
                 </div>
 

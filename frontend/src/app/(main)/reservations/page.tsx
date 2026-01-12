@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import axiosInstance from "@/lib/axios";
 import toast from "react-hot-toast";
 import { ReservationTimer } from "@/components/reservation/ReservationTimer";
+import { formatVND } from "@/lib/currency";
+import FullScreenLoader from "@/components/ui/FullScreenLoader";
 
 interface ReservationItem {
     id: string;
@@ -33,9 +35,8 @@ export default function ReservationsPage() {
 
     useEffect(() => {
         // Redirect to login if not authenticated
-        if (!auth.isAuthenticated) {
+        if (auth.isInitialized && !auth.isAuthenticated) {
             router.push("/login");
-            return;
         }
 
         const fetchReservations = async () => {
@@ -62,25 +63,14 @@ export default function ReservationsPage() {
         };
 
         fetchReservations();
-    }, [auth.isAuthenticated, router]);
+    }, [auth.isAuthenticated, auth.isInitialized, router]);
 
     if (!auth.isAuthenticated) {
         return null;
     }
 
     if (isLoading) {
-        return (
-            <div className="bg-background-light dark:bg-background-dark min-h-screen">
-                <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                        <p className="mt-4 text-gray-600 dark:text-text-secondary-dark">
-                            Đang tải...
-                        </p>
-                    </div>
-                </main>
-            </div>
-        );
+        return <FullScreenLoader />;
     }
 
     return (
@@ -153,7 +143,8 @@ export default function ReservationsPage() {
                                 Đơn Hàng Đã Giữ Chỗ
                             </h1>
                             <p className="text-slate-500 dark:text-text-secondary-dark text-lg font-medium">
-                                {reservations.length} đơn hàng đang chờ thanh toán
+                                {reservations.length} đơn hàng đang chờ thanh
+                                toán
                             </p>
                         </div>
 
@@ -162,7 +153,8 @@ export default function ReservationsPage() {
                             {reservations.map((reservation) => {
                                 const totalValue = reservation.items.reduce(
                                     (sum, item) =>
-                                        sum + item.price_snapshot * item.quantity,
+                                        sum +
+                                        item.price_snapshot * item.quantity,
                                     0
                                 );
 
@@ -194,7 +186,8 @@ export default function ReservationsPage() {
                                             </p>
                                             <p className="text-2xl font-black text-slate-900 dark:text-white">
                                                 {reservation.items.reduce(
-                                                    (sum, item) => sum + item.quantity,
+                                                    (sum, item) =>
+                                                        sum + item.quantity,
                                                     0
                                                 )}{" "}
                                                 <span className="text-sm font-medium text-slate-500 dark:text-text-secondary-dark">
@@ -209,17 +202,16 @@ export default function ReservationsPage() {
                                                 TỔNG GIÁ TRỊ
                                             </p>
                                             <p className="text-3xl font-black text-primary">
-                                                {totalValue.toLocaleString(
-                                                    "vi-VN"
-                                                )}
-                                                đ
+                                                {formatVND(totalValue)}
                                             </p>
                                         </div>
 
                                         {/* Time Left - Use ReservationTimer */}
                                         <div className="mb-6">
                                             <ReservationTimer
-                                                expiresAt={reservation.expires_at}
+                                                expiresAt={
+                                                    reservation.expires_at
+                                                }
                                                 onExpired={() => {
                                                     // Refresh list khi hết hạn
                                                     window.location.reload();

@@ -6,12 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCartStore } from "@/store/cartStore";
 import { CartItemComponent } from "@/components/cart/CartItem";
 import { CartSummary } from "@/components/cart/CartSummary";
+import FullScreenLoader from "@/components/ui/FullScreenLoader";
 
 export default function CartPage() {
     const router = useRouter();
     const auth = useAuth();
     const items = useCartStore((state) => state.items);
-    const clearCart = useCartStore((state) => state.clearCart);
+    console.log(items);
 
     const handleCheckout = () => {
         if (!auth.isAuthenticated) {
@@ -21,9 +22,13 @@ export default function CartPage() {
         router.push("/checkout");
     };
 
+    if (auth.isLoading && !auth.isInitialized) {
+        return <FullScreenLoader />;
+    }
+
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen">
-            <main className="max-w-[1200px] mx-auto w-full px-4 md:px-10 py-8">
+            <main className="max-w-300 mx-auto w-full px-4 md:px-10 py-8">
                 {/* Breadcrumbs */}
                 <div className="flex flex-wrap gap-2 mb-6">
                     <Link
@@ -82,53 +87,6 @@ export default function CartPage() {
                                     bạn
                                 </p>
                             </div>
-
-                            {/* Reservation Timer */}
-                            <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-center gap-6">
-                                <div className="flex flex-col">
-                                    <span className="text-primary text-xs font-bold uppercase tracking-wider">
-                                        Hết Hạn Trong
-                                    </span>
-                                    <div className="flex gap-2 items-center mt-1">
-                                        <div className="flex flex-col items-center">
-                                            <div className="bg-primary text-white font-black text-xl px-3 py-1 rounded-lg">
-                                                09
-                                            </div>
-                                            <span className="text-[10px] text-slate-600 dark:text-text-secondary-dark font-bold mt-1 uppercase">
-                                                Phút
-                                            </span>
-                                        </div>
-                                        <span className="text-primary font-bold text-xl mb-4">
-                                            :
-                                        </span>
-                                        <div className="flex flex-col items-center">
-                                            <div className="bg-primary text-white font-black text-xl px-3 py-1 rounded-lg">
-                                                52
-                                            </div>
-                                            <span className="text-[10px] text-slate-600 dark:text-text-secondary-dark font-bold mt-1 uppercase">
-                                                Giây
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="h-12 w-px bg-primary/20 hidden sm:block"></div>
-                                <div className="flex-col hidden sm:flex">
-                                    <div className="flex justify-between mb-1">
-                                        <span className="text-xs font-semibold text-primary">
-                                            Thời Gian Còn Lại
-                                        </span>
-                                        <span className="text-xs font-bold text-primary">
-                                            92%
-                                        </span>
-                                    </div>
-                                    <div className="w-48 h-2 bg-primary/20 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-primary"
-                                            style={{ width: "92%" }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Cart Content Grid */}
@@ -144,7 +102,7 @@ export default function CartPage() {
 
                                 {/* Notice Box */}
                                 <div className="mt-8 p-6 bg-primary/5 rounded-xl border border-primary/20 flex gap-4">
-                                    <span className="material-symbols-outlined text-primary text-3xl flex-shrink-0">
+                                    <span className="material-symbols-outlined text-primary text-3xl shrink-0">
                                         info
                                     </span>
                                     <div>
@@ -152,12 +110,12 @@ export default function CartPage() {
                                             Chính Sách Giữ Giỏ Hàng
                                         </p>
                                         <p className="text-slate-600 dark:text-text-secondary-dark text-sm leading-relaxed">
-                                            Các sản phẩm trong giỏ hàng chỉ được
-                                            giữ lại trong 10 phút để đảm bảo
-                                            công bằng cho tất cả mọi người trong
-                                            Flash Sale này. Khi hết thời gian,
-                                            các sản phẩm sẽ được trả lại vào kho
-                                            chung.
+                                            Giỏ hàng không có chức năng giữ
+                                            hàng. Sản phẩm thêm vào giỏ không
+                                            đảm bảo còn hàng cho đến khi bạn
+                                            hoàn tất thanh toán. Trong thời gian
+                                            Flash Sale, số lượng có thể thay đổi
+                                            nhanh chóng.
                                         </p>
                                     </div>
                                 </div>

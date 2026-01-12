@@ -108,6 +108,7 @@ export function LoginForm() {
                                     </label>
                                     <Link
                                         href="#"
+                                        tabIndex={-1}
                                         className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
                                     >
                                         Quên Mật Khẩu?
